@@ -70,10 +70,13 @@ public class SuggestImpl<T> implements Suggest<T> {
 	}
 
 	public static <T> List<Suggest<T>> wrap(List<T> list, String valueField, String textField) {
+
 		List<Suggest<T>> suggests = new ArrayList<Suggest<T>>(list.size());
+
 		for (T value : list) {
 			suggests.add(new SuggestImpl<T>(value, valueField, textField));
 		}
+
 		return suggests;
 	}
 

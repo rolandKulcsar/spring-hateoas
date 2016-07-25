@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * Bean related utitility methods Created by Dietrich on 05.12.2015.
  */
-public class BeanUtil {
+class BeanUtil {
 
 	private BeanUtil() {
 		// prevent instantiation
@@ -35,7 +35,8 @@ public class BeanUtil {
 		return ret;
 	}
 
-	private static List<String> addPropertyPaths(List<String> ret, String currentPath, PropertyDescriptor propertyDescriptor) {
+	private static List<String> addPropertyPaths(List<String> ret, String currentPath,
+			PropertyDescriptor propertyDescriptor) {
 		String propertyName = propertyDescriptor.getName();
 		if ("class".equals(propertyName)) {
 			return Collections.emptyList();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 the original author or authors.
+ * Copyright 2014-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,9 @@ public final class TemplateVariables implements Iterable<TemplateVariable>, Seri
 	 * Creates a new {@link TemplateVariables} for the given {@link TemplateVariable}s.
 	 * 
 	 * @param variables must not be {@literal null}.
+	 * @deprecated use {@link #of(TemplateVariable...)} instead.
 	 */
+	@Deprecated
 	public TemplateVariables(TemplateVariable... variables) {
 		this(Arrays.asList(variables));
 	}
@@ -53,11 +55,31 @@ public final class TemplateVariables implements Iterable<TemplateVariable>, Seri
 	 * Creates a new {@link TemplateVariables} for the given {@link TemplateVariable}s.
 	 * 
 	 * @param variables must not be {@literal null}.
+	 * @deprecated use {@link #of(List)} instead.
 	 */
+	@Deprecated
 	public TemplateVariables(List<TemplateVariable> variables) {
 
 		Assert.notNull(variables, "Template variables must not be null!");
 		this.variables = Collections.unmodifiableList(variables);
+	}
+
+	/**
+	 * Creates a new {@link TemplateVariables} for the given {@link TemplateVariable}s.
+	 * 
+	 * @param variables must not be {@literal null}.
+	 */
+	public static TemplateVariables of(TemplateVariable... variables) {
+		return new TemplateVariables(variables);
+	}
+
+	/**
+	 * Creates a new {@link TemplateVariables} for the given {@link TemplateVariable}s.
+	 * 
+	 * @param variables must not be {@literal null}.
+	 */
+	public static TemplateVariables of(List<TemplateVariable> variables) {
+		return new TemplateVariables(variables);
 	}
 
 	/**
@@ -107,6 +129,49 @@ public final class TemplateVariables implements Iterable<TemplateVariable>, Seri
 	 */
 	public List<TemplateVariable> asList() {
 		return this.variables;
+	}
+
+	public TemplateVariables getRequiredVariables() {
+
+		if (isEmpty()) {
+			return this;
+		}
+
+		List<TemplateVariable> result = new ArrayList<TemplateVariable>();
+
+		for (TemplateVariable variable : this.variables) {
+			if (variable.isRequired()) {
+				result.add(variable);
+			}
+		}
+
+		return new TemplateVariables(result);
+	}
+
+	public List<String> getNames() {
+
+		List<String> names = new ArrayList<String>(variables.size());
+
+		for (TemplateVariable variable : variables) {
+			names.add(variable.getName());
+		}
+
+		return Collections.unmodifiableList(names);
+	}
+
+	public boolean isEmpty() {
+		return variables.isEmpty();
+	}
+
+	public boolean hasVariable(String name) {
+
+		for (TemplateVariable variable : variables) {
+			if (variable.hasName(name)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private boolean containsEquivalentFor(TemplateVariable candidate) {

@@ -1,13 +1,12 @@
 package de.escalon.hypermedia.spring;
 
+import de.escalon.hypermedia.affordance.ActionInputParameter;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
-import de.escalon.hypermedia.affordance.ActionInputParameter;
-
 /**
- * Provides documentation urls for the given elements.
- * Created by Dietrich on 04.04.2015.
+ * Provides documentation urls for the given elements. Created by Dietrich on 04.04.2015.
  */
 public interface DocumentationProvider {
 
@@ -45,7 +44,7 @@ public interface DocumentationProvider {
 	 * @param content current value
 	 * @return url or null
 	 */
-	String getDocumentationUrl(Class clazz, Object content);
+	String getDocumentationUrl(Class<?> clazz, Object content);
 
 	/**
 	 * Gets documentationUrl for given attribute name.

@@ -16,6 +16,7 @@
 package org.springframework.hateoas;
 
 import java.io.Serializable;
+import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -153,7 +154,7 @@ public class Link implements Serializable {
 	 */
 	@JsonIgnore
 	public List<TemplateVariable> getVariables() {
-		return getUriTemplate().getVariables();
+		return getUriTemplate().getVariables().asList();
 	}
 
 	/**
@@ -172,7 +173,7 @@ public class Link implements Serializable {
 	 * @return
 	 */
 	public Link expand(Object... arguments) {
-		return new Link(getUriTemplate().expand(arguments).toString(), getRel());
+		return new Link(getUriTemplate().expand(arguments), getRel());
 	}
 
 	/**
@@ -183,6 +184,10 @@ public class Link implements Serializable {
 	 */
 	public Link expand(Map<String, ? extends Object> arguments) {
 		return new Link(getUriTemplate().expand(arguments).toString(), getRel());
+	}
+
+	public URI toUri() {
+		return getUriTemplate().toUri();
 	}
 
 	private UriTemplate getUriTemplate() {

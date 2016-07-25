@@ -1,17 +1,24 @@
 /*
- * Copyright (c) 2014. Escalon System-Entwicklung, Dietrich Schulten
+ * Copyright 2014-2016 the original author or authors.
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for
- * the specific language governing permissions and limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package de.escalon.hypermedia.spring;
+
+import de.escalon.hypermedia.affordance.ActionDescriptor;
+import de.escalon.hypermedia.affordance.Affordance;
+import de.escalon.hypermedia.affordance.TypedResource;
 
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -19,12 +26,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.hateoas.Identifiable;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.LinkBuilder;
+import org.springframework.hateoas.UriTemplate;
+import org.springframework.hateoas.UriTemplateComponents;
 import org.springframework.hateoas.core.DummyInvocationUtils;
 import org.springframework.util.Assert;
 import org.springframework.util.LinkedMultiValueMap;
@@ -36,26 +46,23 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import de.escalon.hypermedia.affordance.ActionDescriptor;
-import de.escalon.hypermedia.affordance.Affordance;
-import de.escalon.hypermedia.affordance.PartialUriTemplate;
-import de.escalon.hypermedia.affordance.PartialUriTemplateComponents;
-import de.escalon.hypermedia.affordance.TypedResource;
-
 /**
- * Builder for hypermedia affordances, usable as rfc-5988 web links and optionally holding information about request
- * body requirements. Created by dschulten on 07.09.2014.
+ * Builder for hypermedia affordances, usable as RFC-5988 web links and optionally holding information about request
+ * body requirements.
+ * 
+ * @author Dietrich Schulten
+ * @author Oliver Gierke
  */
 public class AffordanceBuilder implements LinkBuilder {
 
 	private static final AffordanceBuilderFactory FACTORY = new AffordanceBuilderFactory();
 
-	private final PartialUriTemplateComponents partialUriTemplateComponents;
+	private final UriTemplateComponents partialUriTemplateComponents;
 	private final List<ActionDescriptor> actionDescriptors = new ArrayList<ActionDescriptor>();
-
 	private final MultiValueMap<String, String> linkParams = new LinkedMultiValueMap<String, String>();
 	private final List<String> rels = new ArrayList<String>();
 	private final List<String> reverseRels = new ArrayList<String>();
+
 	private TypedResource collectionHolder;
 
 	/**
@@ -137,23 +144,22 @@ public class AffordanceBuilder implements LinkBuilder {
 	 * Creates a new {@link AffordanceBuilder} pointing to this server, but without ActionDescriptor.
 	 */
 	AffordanceBuilder() {
-		this(new PartialUriTemplate(getBuilder().build().toString()).expand(Collections.<String, Object> emptyMap()),
-				Collections.<ActionDescriptor> emptyList());
+		this(new UriTemplate(getBuilder().build().toString()).expand(Collections.<String, Object>emptyMap()),
+				Collections.<ActionDescriptor>emptyList());
 	}
 
 	/**
 	 * Creates a new {@link AffordanceBuilder} using the given {@link ActionDescriptor}.
 	 *
-	 * @param partialUriTemplateComponents must not be {@literal null}
+	 * @param partialUriTemplate must not be {@literal null}
 	 * @param actionDescriptors must not be {@literal null}
 	 */
-	public AffordanceBuilder(PartialUriTemplateComponents partialUriTemplateComponents,
-			List<ActionDescriptor> actionDescriptors) {
+	public AffordanceBuilder(UriTemplate partialUriTemplate, List<ActionDescriptor> actionDescriptors) {
 
-		Assert.notNull(partialUriTemplateComponents);
+		Assert.notNull(partialUriTemplate);
 		Assert.notNull(actionDescriptors);
 
-		this.partialUriTemplateComponents = partialUriTemplateComponents;
+		this.partialUriTemplateComponents = partialUriTemplate.asComponents();
 
 		for (ActionDescriptor actionDescriptor : actionDescriptors) {
 			this.actionDescriptors.add(actionDescriptor);
@@ -184,21 +190,26 @@ public class AffordanceBuilder implements LinkBuilder {
 	 * @see <a href="https://tools.ietf.org/html/rfc5988#section-5.5">Web Linking Examples</a>
 	 */
 	public Affordance build() {
+
 		Assert.state(!(rels.isEmpty() && reverseRels.isEmpty()),
 				"no rels or reverse rels found, call rel() or rev() before building the affordance");
-		final Affordance affordance;
-		affordance = new Affordance(new PartialUriTemplate(toString()), actionDescriptors,
+
+		Affordance affordance = new Affordance(new UriTemplate(toString()), actionDescriptors, collectionHolder,
 				rels.toArray(new String[rels.size()]));
-		for (Map.Entry<String, List<String>> linkParamEntry : linkParams.entrySet()) {
-			final List<String> values = linkParamEntry.getValue();
+
+		for (Entry<String, List<String>> linkParamEntry : linkParams.entrySet()) {
+
+			List<String> values = linkParamEntry.getValue();
+
 			for (String value : values) {
 				affordance.addLinkParam(linkParamEntry.getKey(), value);
 			}
 		}
+
 		for (String reverseRel : reverseRels) {
 			affordance.addRev(reverseRel);
 		}
-		affordance.setCollectionHolder(collectionHolder);
+
 		return affordance;
 	}
 
@@ -340,29 +351,27 @@ public class AffordanceBuilder implements LinkBuilder {
 			return this;
 		}
 
-		final PartialUriTemplateComponents urlPartComponents = new PartialUriTemplate(urlPart)
-				.expand(Collections.<String, Object> emptyMap());
-		final PartialUriTemplateComponents affordanceComponents = partialUriTemplateComponents;
+		UriTemplateComponents urlPartComponents = new UriTemplate(urlPart).expand().asComponents();
+		UriTemplateComponents affordanceComponents = partialUriTemplateComponents;
 
-		final String path = !affordanceComponents.getBaseUri().endsWith("/")
-				&& !urlPartComponents.getBaseUri().startsWith("/")
-						? affordanceComponents.getBaseUri() + "/" + urlPartComponents.getBaseUri()
-						: affordanceComponents.getBaseUri() + urlPartComponents.getBaseUri();
-		final String queryHead = affordanceComponents.getQueryHead()
-				+ (StringUtils.hasText(urlPartComponents.getQueryHead()) ? "&" + urlPartComponents.getQueryHead().substring(1)
-						: "");
-		final String queryTail = affordanceComponents.getQueryTail()
+		String path = !affordanceComponents.getBaseUri().endsWith("/") && !urlPartComponents.getBaseUri().startsWith("/")
+				? affordanceComponents.getBaseUri() + "/" + urlPartComponents.getBaseUri()
+				: affordanceComponents.getBaseUri() + urlPartComponents.getBaseUri();
+		String queryHead = affordanceComponents.getQueryHead() + (StringUtils.hasText(urlPartComponents.getQueryHead())
+				? "&" + urlPartComponents.getQueryHead().substring(1) : "");
+		String queryTail = affordanceComponents.getQueryTail()
 				+ (StringUtils.hasText(urlPartComponents.getQueryTail()) ? "," + urlPartComponents.getQueryTail() : "");
-		final String fragmentIdentifier = StringUtils.hasText(urlPartComponents.getFragmentIdentifier())
+		String fragmentIdentifier = StringUtils.hasText(urlPartComponents.getFragmentIdentifier())
 				? urlPartComponents.getFragmentIdentifier() : affordanceComponents.getFragmentIdentifier();
 
 		List<String> variableNames = new ArrayList<String>();
 		variableNames.addAll(affordanceComponents.getVariableNames());
 		variableNames.addAll(urlPartComponents.getVariableNames());
-		final PartialUriTemplateComponents mergedUriComponents = new PartialUriTemplateComponents(path, queryHead,
-				queryTail, fragmentIdentifier, variableNames);
 
-		return new AffordanceBuilder(mergedUriComponents, actionDescriptors);
+		UriTemplateComponents mergedUriComponents = new UriTemplateComponents(path, queryHead, queryTail,
+				fragmentIdentifier, variableNames);
+
+		return new AffordanceBuilder(new UriTemplate(mergedUriComponents.toString()), actionDescriptors);
 	}
 
 	@Override
@@ -376,9 +385,9 @@ public class AffordanceBuilder implements LinkBuilder {
 
 	@Override
 	public URI toUri() {
-		PartialUriTemplate partialUriTemplate = new PartialUriTemplate(partialUriTemplateComponents.toString());
+		UriTemplate partialUriTemplate = new UriTemplate(partialUriTemplateComponents.toString());
 
-		final String actionLink = partialUriTemplate.stripOptionalVariables(actionDescriptors).toString();
+		String actionLink = partialUriTemplate.stripOptionalVariables(actionDescriptors).toString();
 
 		if (actionLink == null || actionLink.contains("{")) {
 			throw new IllegalStateException("cannot convert template to URI");
@@ -453,6 +462,7 @@ public class AffordanceBuilder implements LinkBuilder {
 	 *
 	 * @return request
 	 */
+	@SuppressWarnings("null")
 	private static HttpServletRequest getCurrentRequest() {
 
 		RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();

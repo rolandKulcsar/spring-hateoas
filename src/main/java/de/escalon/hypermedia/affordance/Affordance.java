@@ -13,6 +13,8 @@
 
 package de.escalon.hypermedia.affordance;
 
+import de.escalon.hypermedia.action.Cardinality;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -21,6 +23,7 @@ import java.util.Map;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.TemplateVariable;
 import org.springframework.hateoas.UriTemplate;
+import org.springframework.hateoas.UriTemplateComponents;
 import org.springframework.util.Assert;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -29,8 +32,6 @@ import org.springframework.util.StringUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-
-import de.escalon.hypermedia.action.Cardinality;
 
 /**
  * Represents an http affordance for purposes of a ReST service as described by
@@ -43,8 +44,8 @@ import de.escalon.hypermedia.action.Cardinality;
  * <p>
  * This class can be created manually or via one of the {@link de.escalon.hypermedia.spring.AffordanceBuilder#linkTo}
  * methods. In the latter case the affordance should be created with pre-expanded variables (using
- * {@link PartialUriTemplate#expand} on the given uri template). In the former case one may use {@link #expandPartially}
- * to expand the Affordance variables as far as possible, while keeping unsatisified variables.
+ * {@link UriTemplate#expand} on the given uri template). In the former case one may use {@link #expandPartially} to
+ * expand the Affordance variables as far as possible, while keeping unsatisified variables.
  * </p>
  * <p>
  * Created by dschulten on 07.09.2014.
@@ -54,12 +55,21 @@ public class Affordance extends Link {
 
 	private static final long serialVersionUID = 3256465945939099914L;
 
-	private boolean selfRel = false;
-	private List<ActionDescriptor> actionDescriptors = new ArrayList<ActionDescriptor>();
-	private MultiValueMap<String, String> linkParams = new LinkedMultiValueMap<String, String>();
-	private final PartialUriTemplate partialUriTemplate;
-	private Cardinality cardinality = Cardinality.SINGLE;
-	private TypedResource collectionHolder;
+	private final boolean selfRel;
+	private final List<ActionDescriptor> actionDescriptors = new ArrayList<ActionDescriptor>();
+	private final MultiValueMap<String, String> linkParams = new LinkedMultiValueMap<String, String>();
+	private final UriTemplate partialUriTemplate;
+	private final Cardinality cardinality;
+	private final TypedResource collectionHolder;
+
+	/**
+	 * Creates affordance. Rels, action descriptors and link header params may be added later.
+	 *
+	 * @param uriTemplate uri or uritemplate of the affordance
+	 */
+	public Affordance(String uriTemplate) {
+		this(uriTemplate, new String[0]);
+	}
 
 	/**
 	 * Creates affordance. Action descriptors and link header params may be added later.
@@ -68,16 +78,7 @@ public class Affordance extends Link {
 	 * @param rels describing the link relation type
 	 */
 	public Affordance(String uriTemplate, String... rels) {
-		this(new PartialUriTemplate(uriTemplate), new ArrayList<ActionDescriptor>(), rels);
-	}
-
-	/**
-	 * Creates affordance. Rels, action descriptors and link header params may be added later.
-	 *
-	 * @param uriTemplate uri or uritemplate of the affordance
-	 */
-	public Affordance(String uriTemplate) {
-		this(uriTemplate, new String[] {});
+		this(new UriTemplate(uriTemplate), new ArrayList<ActionDescriptor>(), null, rels);
 	}
 
 	/**
@@ -88,9 +89,10 @@ public class Affordance extends Link {
 	 * @param uriTemplate pre-expanded uri or uritemplate of the affordance
 	 * @param actionDescriptors describing the possible http methods on the affordance
 	 * @param rels describing the link relation type
-	 * @see PartialUriTemplate#expand
+	 * @see UriTemplate#expand
 	 */
-	public Affordance(PartialUriTemplate uriTemplate, List<ActionDescriptor> actionDescriptors, String... rels) {
+	public Affordance(UriTemplate uriTemplate, List<ActionDescriptor> actionDescriptors, TypedResource typedResource,
+			String... rels) {
 		// Since AffordanceBuilder creates variables for undefined arguments,
 		// we would get a link-template where ControllerLinkBuilder only sees a link.
 		// For compatibility we strip variables deemed to be not required by the actionDescriptors before passing on
@@ -103,26 +105,36 @@ public class Affordance extends Link {
 
 		Assert.noNullElements(rels, "null rels are not allowed");
 
+		boolean selfFound = false;
+
 		for (String rel : rels) {
 			addRel(rel);
-			if ("self".equals(rel)) {
-				selfRel = true;
-			}
+
+			selfFound = "self".equals(rel);
 		}
+
+		this.selfRel = selfFound;
+
+		boolean collectionFound = false;
+
 		// if any action refers to a collection resource, make the affordance a collection affordance
 		for (ActionDescriptor actionDescriptor : actionDescriptors) {
 			if (Cardinality.COLLECTION == actionDescriptor.getCardinality()) {
-				cardinality = Cardinality.COLLECTION;
+				collectionFound = true;
 				break;
 			}
 		}
+
+		this.cardinality = collectionFound ? Cardinality.COLLECTION : Cardinality.SINGLE;
 		this.actionDescriptors.addAll(actionDescriptors);
+		this.collectionHolder = typedResource;
 	}
 
 	private Affordance(String uriTemplate, MultiValueMap<String, String> linkParams,
 			List<ActionDescriptor> actionDescriptors) {
-		this(new PartialUriTemplate(uriTemplate), actionDescriptors); // no rels to pass
-		this.linkParams = linkParams; // takes care of rels
+
+		this(new UriTemplate(uriTemplate), actionDescriptors, null); // no rels to pass
+		this.linkParams.putAll(linkParams); // takes care of rels
 	}
 
 	/**
@@ -361,8 +373,9 @@ public class Affordance extends Link {
 	 */
 	@Override
 	public Affordance expand(Object... arguments) {
+
 		UriTemplate template = new UriTemplate(partialUriTemplate.asComponents().toString());
-		String expanded = template.expand(arguments).toASCIIString();
+		String expanded = template.expand(arguments).toString();
 		return new Affordance(expanded, linkParams, actionDescriptors);
 	}
 
@@ -372,7 +385,7 @@ public class Affordance extends Link {
 	 * @return template component parts
 	 */
 	@JsonIgnore
-	public PartialUriTemplateComponents getUriTemplateComponents() {
+	public UriTemplateComponents getUriTemplateComponents() {
 		return partialUriTemplate.asComponents();
 	}
 
@@ -386,7 +399,7 @@ public class Affordance extends Link {
 	@Override
 	public Affordance expand(Map<String, ? extends Object> arguments) {
 		UriTemplate template = new UriTemplate(partialUriTemplate.asComponents().toString());
-		String expanded = template.expand(arguments).toASCIIString();
+		String expanded = template.expand(arguments).toString();
 		return new Affordance(expanded, linkParams, actionDescriptors);
 	}
 
@@ -423,8 +436,8 @@ public class Affordance extends Link {
 	 */
 	@JsonIgnore
 	public List<String> getRels() {
-		final List<String> rels = linkParams.get("rel");
-		return rels == null ? Collections.<String> emptyList() : Collections.unmodifiableList(rels);
+		List<String> rels = linkParams.get("rel");
+		return rels == null ? Collections.<String>emptyList() : Collections.unmodifiableList(rels);
 	}
 
 	/**
@@ -444,8 +457,8 @@ public class Affordance extends Link {
 	 */
 	@JsonIgnore
 	public List<String> getRevs() {
-		final List<String> revs = linkParams.get("rev");
-		return revs == null ? Collections.<String> emptyList() : Collections.unmodifiableList(revs);
+		List<String> revs = linkParams.get("rev");
+		return revs == null ? Collections.<String>emptyList() : Collections.unmodifiableList(revs);
 	}
 
 	/**
@@ -456,19 +469,6 @@ public class Affordance extends Link {
 	@JsonIgnore
 	public String getRev() {
 		return linkParams.getFirst("rev");
-	}
-
-	/**
-	 * Sets action descriptors.
-	 *
-	 * @param actionDescriptors to set
-	 */
-	public void setActionDescriptors(List<ActionDescriptor> actionDescriptors) {
-		if (this.actionDescriptors.isEmpty()) {
-			this.actionDescriptors = actionDescriptors;
-		} else {
-			throw new IllegalStateException("cannot redefine existing action descriptors");
-		}
 	}
 
 	/**
@@ -534,9 +534,5 @@ public class Affordance extends Link {
 	@JsonIgnore
 	public TypedResource getCollectionHolder() {
 		return collectionHolder;
-	}
-
-	public void setCollectionHolder(TypedResource collectionHolder) {
-		this.collectionHolder = collectionHolder;
 	}
 }

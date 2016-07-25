@@ -19,30 +19,22 @@ import java.util.Date;
 
 import javax.xml.bind.DatatypeConverter;
 
-
 /**
- * Distinguishes and creates data types, e.g. for serialization/deserialization.
- * Created by dschulten on 22.10.2014.
+ * Distinguishes and creates data types, e.g. for serialization/deserialization. Created by dschulten on 22.10.2014.
  */
 public class DataType {
 
 	/**
-	 * Determines if the given class holds only one data item. Can be useful to determine if a value should be rendered
-	 * as scalar.
+	 * Determines if the given class holds only one data item. Can be useful to determine if a value should be rendered as
+	 * scalar.
 	 *
 	 * @param clazz to check
 	 * @return true if class is scalar
 	 */
 	public static boolean isSingleValueType(Class<?> clazz) {
 		boolean ret;
-		if (isNumber(clazz)
-				|| isBoolean(clazz)
-				|| isString(clazz)
-				|| isEnum(clazz)
-				|| isDate(clazz)
-				|| isCalendar(clazz)
-				|| isCurrency(clazz)
-				) {
+		if (isNumber(clazz) || isBoolean(clazz) || isString(clazz) || isEnum(clazz) || isDate(clazz) || isCalendar(clazz)
+				|| isCurrency(clazz)) {
 			ret = true;
 		} else {
 			ret = false;
@@ -55,15 +47,8 @@ public class DataType {
 	}
 
 	public static boolean isNumber(Class<?> clazz) {
-		return (
-				Number.class.isAssignableFrom(clazz) ||
-						int.class == clazz ||
-						long.class == clazz ||
-						float.class == clazz ||
-						byte.class == clazz ||
-						short.class == clazz ||
-						double.class == clazz
-		);
+		return (Number.class.isAssignableFrom(clazz) || int.class == clazz || long.class == clazz || float.class == clazz
+				|| byte.class == clazz || short.class == clazz || double.class == clazz);
 	}
 
 	public static boolean isInteger(Class<?> clazz) {
@@ -165,8 +150,7 @@ public class DataType {
 			if (isIsoLatin1Number(string)) {
 				return new Date(Long.parseLong(string));
 			} else {
-				return DatatypeConverter.parseDateTime(string)
-						.getTime();
+				return DatatypeConverter.parseDateTime(string).getTime();
 			}
 		} else if (isCurrency(type)) {
 			return Currency.getInstance(string);

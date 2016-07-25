@@ -4,15 +4,17 @@ import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.util.ReflectionUtils;
+
 /**
- * Convenience methods to work with Java bean properties.
- * Created by Dietrich on 11.03.2015.
+ * Convenience methods to work with Java bean properties. Created by Dietrich on 11.03.2015.
  */
 public class PropertyUtils {
 
@@ -24,8 +26,7 @@ public class PropertyUtils {
 		Object propertyValue = null;
 		if (currentCallValue != null && propertyDescriptor.getReadMethod() != null) {
 			try {
-				propertyValue = propertyDescriptor.getReadMethod()
-						.invoke(currentCallValue);
+				propertyValue = propertyDescriptor.getReadMethod().invoke(currentCallValue);
 			} catch (Exception e) {
 				throw new RuntimeException("failed to read property from call value", e);
 			}
@@ -35,8 +36,7 @@ public class PropertyUtils {
 
 	public static Map<String, PropertyDescriptor> getPropertyDescriptors(Object bean) {
 		try {
-			PropertyDescriptor[] propertyDescriptors = Introspector.getBeanInfo(bean.getClass())
-					.getPropertyDescriptors();
+			PropertyDescriptor[] propertyDescriptors = Introspector.getBeanInfo(bean.getClass()).getPropertyDescriptors();
 			Map<String, PropertyDescriptor> ret = new HashMap<String, PropertyDescriptor>();
 			for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
 				ret.put(propertyDescriptor.getName(), propertyDescriptor);
@@ -47,26 +47,27 @@ public class PropertyUtils {
 		}
 	}
 
-	public static Constructor findDefaultCtor(Constructor[] constructors) {
-		// TODO duplicate on HtmlResourceMessageConverter
-		Constructor constructor = null;
-		for (Constructor ctor : constructors) {
-			if (ctor.getParameterTypes().length == 0) {
-				constructor = ctor;
+	public static Constructor<?> findDefaultCtor(Constructor<?>[] candidates) {
+
+		for (Constructor<?> candidate : candidates) {
+			if (candidate.getParameterTypes().length == 0) {
+				return candidate;
 			}
 		}
-		return constructor;
+
+		return null;
 	}
 
-	public static Constructor findJsonCreator(Constructor[] constructors, Class creatorAnnotation) {
-		Constructor constructor = null;
-		for (Constructor ctor : constructors) {
-			if (AnnotationUtils.findAnnotation(ctor, creatorAnnotation) != null) {
-				constructor = ctor;
-				break;
+	public static Constructor<?> findJsonCreator(Constructor<?>[] candidates,
+			Class<? extends Annotation> creatorAnnotation) {
+
+		for (Constructor<?> candidate : candidates) {
+			if (org.springframework.core.annotation.AnnotationUtils.getAnnotation(candidate, creatorAnnotation) != null) {
+				return candidate;
 			}
 		}
-		return constructor;
+
+		return null;
 	}
 
 	// TODO move to PropertyUtil and remove current method for propertyDescriptors, cache search results
@@ -110,6 +111,7 @@ public class PropertyUtils {
 				if (paramName.equals(pd.getName())) {
 					Method readMethod = pd.getReadMethod();
 					if (readMethod != null) {
+						ReflectionUtils.makeAccessible(readMethod);
 						propertyValue = readMethod.invoke(currentCallValue);
 					}
 					break;
@@ -117,8 +119,7 @@ public class PropertyUtils {
 			}
 			return propertyValue;
 		} catch (Exception e) {
-			throw new RuntimeException("Failed to read property " + paramName + " from " + currentCallValue.toString
-					(), e);
+			throw new RuntimeException("Failed to read property " + paramName + " from " + currentCallValue.toString(), e);
 		}
 	}
 }

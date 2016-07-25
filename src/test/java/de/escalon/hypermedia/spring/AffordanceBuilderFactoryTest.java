@@ -10,11 +10,13 @@
 
 package de.escalon.hypermedia.spring;
 
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
+
+import de.escalon.hypermedia.affordance.Affordance;
 
 import java.lang.reflect.Method;
 
-import de.escalon.hypermedia.affordance.Affordance;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.hateoas.Resource;
@@ -38,90 +40,86 @@ public class AffordanceBuilderFactoryTest {
 	private MockHttpServletRequest request;
 
 	/**
-	 * Sample controller.
-	 * Created by dschulten on 11.09.2014.
+	 * Sample controller. Created by dschulten on 11.09.2014.
 	 */
 	@Controller
 	@RequestMapping("/events")
 	class EventControllerSample {
 
 		@RequestMapping(value = "/{eventId}", method = RequestMethod.GET)
-		public
-		@ResponseBody
-		Resource<Object> getEvent(@PathVariable String eventId) {
+		public @ResponseBody Resource<Object> getEvent(@PathVariable String eventId) {
 			return null;
 		}
 	}
 
 	@Before
 	public void setUp() {
-		request = MockMvcRequestBuilders.get("http://example.com/")
-				.buildRequest(new MockServletContext());
-		final RequestAttributes requestAttributes = new ServletRequestAttributes(request);
+
+		request = MockMvcRequestBuilders.get("http://example.com/").buildRequest(new MockServletContext());
+
+		RequestAttributes requestAttributes = new ServletRequestAttributes(request);
 		RequestContextHolder.setRequestAttributes(requestAttributes);
 	}
 
 	@Test
 	public void testLinkToMethod() throws Exception {
-		final Method getEventMethod = ReflectionUtils.findMethod(EventControllerSample.class, "getEvent", String.class);
-		final Affordance affordance = factory.linkTo(getEventMethod, new Object[0])
-				.rel("foo").build();
-		assertEquals("http://example.com/events/{eventId}", affordance.getHref());
+
+		Method getEventMethod = ReflectionUtils.findMethod(EventControllerSample.class, "getEvent", String.class);
+		Affordance affordance = factory.linkTo(getEventMethod, new Object[0]).rel("foo").build();
+
+		assertThat(affordance.getHref(), is("http://example.com/events/{eventId}"));
 	}
 
 	@Test
 	public void testLinkToMethodInvocation() throws Exception {
-		final Method getEventMethod = ReflectionUtils.findMethod(EventControllerSample.class, "getEvent", String.class);
-		final Affordance affordance = factory.linkTo(AffordanceBuilder.methodOn(EventControllerSample.class)
-				.getEvent((String) null))
-				.rel("foo").build();
-		assertEquals("http://example.com/events/{eventId}", affordance.getHref());
+
+		Affordance affordance = factory
+				.linkTo(AffordanceBuilder.methodOn(EventControllerSample.class).getEvent((String) null)).rel("foo").build();
+
+		assertThat(affordance.getHref(), is("http://example.com/events/{eventId}"));
 	}
 
 	@Test
 	public void testLinkToControllerClass() throws Exception {
-		final Affordance affordance = factory.linkTo(EventControllerSample.class, new Object[0])
-				.rel("foo").build();
+
+		Affordance affordance = factory.linkTo(EventControllerSample.class, new Object[0]).rel("foo").build();
+
 		assertEquals("http://example.com/events", affordance.getHref());
 	}
 
 	@Test
 	public void testLinkToMethodNoArgsBuild() throws Exception {
-		final Method getEventMethod = ReflectionUtils.findMethod(EventControllerSample.class, "getEvent", String.class);
-		final Affordance affordance = factory.linkTo(getEventMethod, new Object[0])
-				.rel("foo")
-				.build();
+
+		Method getEventMethod = ReflectionUtils.findMethod(EventControllerSample.class, "getEvent", String.class);
+		Affordance affordance = factory.linkTo(getEventMethod, new Object[0]).rel("foo").build();
+
 		assertEquals("http://example.com/events/{eventId}", affordance.getHref());
 		assertEquals("foo", affordance.getRel());
 	}
 
 	@Test
 	public void testLinkToMethodInvocationNoArgsBuild() throws Exception {
-		final Method getEventMethod = ReflectionUtils.findMethod(EventControllerSample.class, "getEvent", String.class);
-		final Affordance affordance = factory.linkTo(AffordanceBuilder.methodOn(EventControllerSample.class)
-				.getEvent((String) null))
-				.rel("foo")
-				.build();
+
+		Affordance affordance = factory
+				.linkTo(AffordanceBuilder.methodOn(EventControllerSample.class).getEvent((String) null)).rel("foo").build();
 		assertEquals("http://example.com/events/{eventId}", affordance.getHref());
 		assertEquals("foo", affordance.getRel());
 	}
 
 	@Test
 	public void testLinkToControllerClassNoArgsBuild() throws Exception {
-		final Affordance affordance = factory.linkTo(EventControllerSample.class, new Object[0])
-				.rel("foo")
-				.build();
+		final Affordance affordance = factory.linkTo(EventControllerSample.class, new Object[0]).rel("foo").build();
 		assertEquals("http://example.com/events", affordance.getHref());
 		assertEquals("foo", affordance.getRel());
 	}
 
 	@Test
 	public void testLinkToMethodInvocationReverseRel() throws Exception {
-		final Method getEventMethod = ReflectionUtils.findMethod(EventControllerSample.class, "findEventByName", String.class);
-		final Affordance affordance = factory.linkTo(AffordanceBuilder.methodOn(EventControllerSample.class)
-				.getEvent((String) null))
-				.reverseRel("schema:parent", "ex:children")
-				.build();
+
+		Affordance affordance = factory
+				.linkTo(AffordanceBuilder.methodOn(EventControllerSample.class).getEvent((String) null))
+				.reverseRel("schema:parent", "ex:children").build();
+
 		assertEquals("http://example.com/events/{eventId}", affordance.getHref());
 		assertEquals("schema:parent", affordance.getRev());
 		assertEquals("ex:children", affordance.getRel());

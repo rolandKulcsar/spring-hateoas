@@ -1,10 +1,11 @@
 package de.escalon.hypermedia.action;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.*;
+
+import de.escalon.hypermedia.spring.SpringActionDescriptor;
+import de.escalon.hypermedia.spring.SpringActionInputParameter;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -13,10 +14,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.hamcrest.Matchers;
-import org.junit.Before;
 import org.junit.Test;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,15 +25,13 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import de.escalon.hypermedia.spring.SpringActionDescriptor;
-import de.escalon.hypermedia.spring.SpringActionInputParameter;
-
 /**
  * Created by Dietrich on 16.05.2015.
  */
 public class ActionInputParameterTest {
 
 	private static final Map<String, Boolean> DEFAULT_CONSTRAINTS_MAP = new HashMap<String, Boolean>(2);
+
 	static {
 		DEFAULT_CONSTRAINTS_MAP.put("editable", true);
 		DEFAULT_CONSTRAINTS_MAP.put("required", true);
@@ -44,59 +43,54 @@ public class ActionInputParameterTest {
 		@Action("ReviewAction")
 		@RequestMapping(value = "/{rating}", params = "reviewBody", method = RequestMethod.POST)
 		public @ResponseBody ResponseEntity<Void> addReview(
-				@PathVariable @Select({ "excellent", "mediocre", "abysmal" }) final String rating,
-				@RequestParam(defaultValue = "excellent") @Input(minLength = 5, pattern = "[ -~]*") final String reviewBody) {
+				@PathVariable @Select({ "excellent", "mediocre", "abysmal" }) String rating,
+				@RequestParam(defaultValue = "excellent") @Input(minLength = 5, pattern = "[ -~]*") String reviewBody) {
 			return null;
 		}
 
 		@Action("ReviewAction")
 		@RequestMapping(params = "searchTerms", method = RequestMethod.GET)
 		public @ResponseBody ResponseEntity<Object> queryReviewsRated(
-				@RequestParam @Select({ "excellent", "mediocre", "abysmal" }) final List<String> searchTerms) {
+				@RequestParam @Select({ "excellent", "mediocre", "abysmal" }) List<String> searchTerms) {
 			return null;
 		}
 	}
 
-	@Before
-	public void setUp() {
-
-	}
-
 	@Test
 	public void testAddReviewPathVariableReviewBody() throws NoSuchMethodException {
+
 		Method addReview = DummyController.class.getMethod("addReview", String.class, String.class);
-		MethodParameter rating = new MethodParameter(addReview, 0);
 		MethodParameter reviewBody = new MethodParameter(addReview, 1);
 
 		SpringActionInputParameter actionInputParameter = new SpringActionInputParameter(reviewBody, "yada, yada");
 
-		assertTrue(actionInputParameter.hasValue());
-		assertEquals("yada, yada", actionInputParameter.getValue());
+		assertThat(actionInputParameter.hasValue(), is(true));
+		assertThat(actionInputParameter.getValue(), is((Object) "yada, yada"));
 
-		assertEquals(DummyController.class, actionInputParameter.getDeclaringClass());
+		assertThat(actionInputParameter.getDeclaringClass(), is(typeCompatibleWith(DummyController.class)));
 
-		assertTrue(actionInputParameter.hasInputConstraints());
-		assertEquals("[ -~]*", actionInputParameter.getInputConstraints().get("pattern"));
-		assertEquals(5, actionInputParameter.getInputConstraints().get("minLength"));
+		assertThat(actionInputParameter.hasInputConstraints(), is(true));
+		assertThat(actionInputParameter.getInputConstraints().get("pattern"), is((Object) "[ -~]*"));
+		assertThat(actionInputParameter.getInputConstraints().get("minLength"), is((Object) 5));
 
-		assertEquals("reviewBody", actionInputParameter.getParameterName());
-		assertEquals(String.class, actionInputParameter.getParameterType());
-		assertEquals(0,
-				actionInputParameter.getPossibleValues(new SpringActionDescriptor("post", RequestMethod.POST.name())).size());
-		assertEquals(Type.TEXT, actionInputParameter.getHtmlInputFieldType());
-		assertNull(actionInputParameter.getRequestHeaderName());
+		assertThat(actionInputParameter.getParameterName(), is("reviewBody"));
+		assertThat(actionInputParameter.getParameterType(), is(typeCompatibleWith(String.class)));
+		assertThat(actionInputParameter.getPossibleValues(new SpringActionDescriptor("post", HttpMethod.POST)), hasSize(0));
+		assertThat(actionInputParameter.getHtmlInputFieldType(), is(Type.TEXT));
+		assertThat(actionInputParameter.getRequestHeaderName(), is(nullValue()));
 
-		assertFalse(actionInputParameter.isArrayOrCollection());
-		assertFalse(actionInputParameter.isRequestBody());
-		assertFalse(actionInputParameter.isRequestHeader());
-		assertFalse(actionInputParameter.isPathVariable());
-		assertFalse(actionInputParameter.isRequired());
+		assertThat(actionInputParameter.isArrayOrCollection(), is(false));
+		assertThat(actionInputParameter.isRequestBody(), is(false));
+		assertThat(actionInputParameter.isRequestHeader(), is(false));
+		assertThat(actionInputParameter.isPathVariable(), is(false));
+		assertThat(actionInputParameter.isRequired(), is(false));
 
-		assertTrue(actionInputParameter.isRequestParam());
+		assertThat(actionInputParameter.isRequestParam(), is(true));
 	}
 
 	@Test
 	public void testAddReviewRequestParamRating() throws NoSuchMethodException {
+
 		Method addReview = DummyController.class.getMethod("addReview", String.class, String.class);
 		MethodParameter rating = new MethodParameter(addReview, 0);
 
@@ -113,8 +107,7 @@ public class ActionInputParameterTest {
 
 		assertEquals("rating", actionInputParameter.getParameterName());
 		assertEquals(String.class, actionInputParameter.getParameterType());
-		assertEquals(3,
-				actionInputParameter.getPossibleValues(new SpringActionDescriptor("post", RequestMethod.POST.name())).size());
+		assertEquals(3, actionInputParameter.getPossibleValues(new SpringActionDescriptor("post", HttpMethod.POST)).size());
 		assertEquals(Type.TEXT, actionInputParameter.getHtmlInputFieldType());
 
 		assertFalse(actionInputParameter.isArrayOrCollection());
@@ -147,8 +140,7 @@ public class ActionInputParameterTest {
 		assertEquals(List.class, actionInputParameter.getParameterType());
 		assertEquals(new ParameterizedTypeReference<List<String>>() {}.getType(),
 				actionInputParameter.getGenericParameterType());
-		assertEquals(3,
-				actionInputParameter.getPossibleValues(new SpringActionDescriptor("post", RequestMethod.POST.name())).size());
+		assertEquals(3, actionInputParameter.getPossibleValues(new SpringActionDescriptor("post", HttpMethod.POST)).size());
 		assertNull(actionInputParameter.getHtmlInputFieldType());
 
 		assertTrue(actionInputParameter.isRequestParam());
@@ -191,8 +183,7 @@ public class ActionInputParameterTest {
 		assertEquals("shade", actionInputParameter.getParameterName());
 		assertEquals(ShadeOfBlue.class, actionInputParameter.getParameterType());
 		assertEquals(ShadeOfBlue.class, actionInputParameter.getGenericParameterType());
-		assertEquals(4,
-				actionInputParameter.getPossibleValues(new SpringActionDescriptor("get", RequestMethod.GET.name())).size());
+		assertEquals(4, actionInputParameter.getPossibleValues(new SpringActionDescriptor("get", HttpMethod.POST)).size());
 		assertEquals(Type.TEXT, actionInputParameter.getHtmlInputFieldType());
 
 		assertTrue(actionInputParameter.isRequestParam());
@@ -232,8 +223,7 @@ public class ActionInputParameterTest {
 		assertEquals("shade", actionInputParameter.getParameterName());
 		assertEquals(ShadeOfBlue[].class, actionInputParameter.getParameterType());
 		assertEquals(ShadeOfBlue[].class, actionInputParameter.getGenericParameterType());
-		assertEquals(4,
-				actionInputParameter.getPossibleValues(new SpringActionDescriptor("get", RequestMethod.GET.name())).size());
+		assertEquals(4, actionInputParameter.getPossibleValues(new SpringActionDescriptor("get", HttpMethod.POST)).size());
 		assertNull(actionInputParameter.getHtmlInputFieldType());
 
 		assertTrue(actionInputParameter.isRequestParam());
@@ -274,8 +264,7 @@ public class ActionInputParameterTest {
 
 		assertEquals(new ParameterizedTypeReference<List<ShadeOfBlue>>() {}.getType(),
 				actionInputParameter.getGenericParameterType());
-		assertEquals(4,
-				actionInputParameter.getPossibleValues(new SpringActionDescriptor("get", RequestMethod.GET.name())).size());
+		assertEquals(4, actionInputParameter.getPossibleValues(new SpringActionDescriptor("get", HttpMethod.POST)).size());
 		assertNull(actionInputParameter.getHtmlInputFieldType());
 
 		assertTrue(actionInputParameter.isRequestParam());

@@ -1,7 +1,6 @@
 package de.escalon.hypermedia;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 
 /**
@@ -9,18 +8,7 @@ import java.lang.reflect.Method;
  */
 public class AnnotationUtils {
 
-	private AnnotationUtils() {
-	}
-
-	public static <T extends Annotation> T findAnnotation(AnnotatedElement annotated, Class<T> annotationClass) {
-		T ret;
-		if (annotated == null) {
-			ret = null;
-		} else {
-			ret = annotated.getAnnotation(annotationClass);
-		}
-		return ret;
-	}
+	private AnnotationUtils() {}
 
 	public static Method getAnnotatedMethod(Class<?> clazz, Class<? extends Annotation> annotation) {
 		Method[] methods = clazz.getMethods();

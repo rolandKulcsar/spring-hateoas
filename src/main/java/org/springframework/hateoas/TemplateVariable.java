@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 the original author or authors.
+ * Copyright 2014-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@ package org.springframework.hateoas;
 
 import static org.springframework.hateoas.TemplateVariable.VariableType.*;
 
+import lombok.NonNull;
+import lombok.Value;
+
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
@@ -29,21 +32,35 @@ import org.springframework.util.StringUtils;
  * 
  * @author Oliver Gierke
  */
+@Value
 public final class TemplateVariable implements Serializable {
 
 	private static final long serialVersionUID = -2731446749851863774L;
 
-	private final String name;
-	private final TemplateVariable.VariableType type;
-	private final String description;
+	/**
+	 * The name of the variable.
+	 */
+	@NonNull String name;
+
+	/**
+	 * The type of the variable.
+	 */
+	@NonNull TemplateVariable.VariableType type;
+
+	/**
+	 * The description of the variable
+	 */
+	@NonNull String description;
 
 	/**
 	 * Creates a new {@link TemplateVariable} with the given name and type.
 	 * 
 	 * @param name must not be {@literal null} or empty.
 	 * @param type must not be {@literal null}.
+	 * @deprecated use {@link #of(String, VariableType)} instead.
 	 */
-	public TemplateVariable(String name, TemplateVariable.VariableType type) {
+	@Deprecated
+	public TemplateVariable(String name, VariableType type) {
 		this(name, type, "");
 	}
 
@@ -52,12 +69,14 @@ public final class TemplateVariable implements Serializable {
 	 * 
 	 * @param name must not be {@literal null} or empty.
 	 * @param type must not be {@literal null}.
-	 * @param description must not be {@literal null}.
+	 * @param description can be {@literal null}.
+	 * @deprecated use {@link #of(String, VariableType, String)} instead
 	 */
-	public TemplateVariable(String name, TemplateVariable.VariableType type, String description) {
+	@Deprecated
+	public TemplateVariable(String name, VariableType type, String description) {
 
-		Assert.hasText(name, "Variable name must not be null or empty!");
-		Assert.notNull(type, "Variable type must not be null!");
+		Assert.hasText(name, "Name must not be null or empty!");
+		Assert.notNull(type, "Type must not be null!");
 		Assert.notNull(description, "Description must not be null!");
 
 		this.name = name;
@@ -66,30 +85,37 @@ public final class TemplateVariable implements Serializable {
 	}
 
 	/**
-	 * Returns the name of the variable.
+	 * Creates a new {@link TemplateVariable} with the given name and type.
 	 * 
-	 * @return
+	 * @param name must not be {@literal null} or empty.
+	 * @param type must not be {@literal null}.
 	 */
-	public String getName() {
-		return this.name;
+	public static TemplateVariable of(String name, VariableType type) {
+		return of(name, type, "");
 	}
 
 	/**
-	 * Returns the type of the variable.
+	 * Creates a new {@link TemplateVariable} with the given name, type and description.
 	 * 
-	 * @return the type
+	 * @param name must not be {@literal null} or empty.
+	 * @param type must not be {@literal null}.
+	 * @param description can be {@literal null}.
 	 */
-	public VariableType getType() {
-		return type;
+	public static TemplateVariable of(String name, VariableType type, String description) {
+		return new TemplateVariable(name, type, description);
 	}
 
 	/**
-	 * Returns the description of the variable.
+	 * Returns whether the {@link TemplateVariable} has the given name.
 	 * 
+	 * @param name must not be {@literal null}.
 	 * @return
 	 */
-	public String getDescription() {
-		return description;
+	public boolean hasName(String name) {
+
+		Assert.notNull(name, "Name must not be null!");
+
+		return this.name.equals(name);
 	}
 
 	/**
@@ -159,40 +185,6 @@ public final class TemplateVariable implements Serializable {
 
 		String base = String.format("{%s%s}", type.toString(), name);
 		return StringUtils.hasText(description) ? String.format("%s - %s", base, description) : base;
-	}
-
-	/* 
-	 * (non-Javadoc)
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
-	@Override
-	public boolean equals(Object obj) {
-
-		if (obj == this) {
-			return true;
-		}
-
-		if (!(obj instanceof TemplateVariable)) {
-			return false;
-		}
-
-		TemplateVariable that = (TemplateVariable) obj;
-		return this.name.equals(that.name) && this.type.equals(that.type);
-	}
-
-	/* 
-	 * (non-Javadoc)
-	 * @see java.lang.Object#hashCode()
-	 */
-	@Override
-	public int hashCode() {
-
-		int result = 17;
-
-		result += this.name.hashCode();
-		result += this.type.hashCode();
-
-		return result;
 	}
 
 	/**

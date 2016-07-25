@@ -55,6 +55,7 @@ import org.springframework.hateoas.hal.CurieProvider;
 import org.springframework.hateoas.hal.HalLinkDiscoverer;
 import org.springframework.hateoas.hal.Jackson2HalModule;
 import org.springframework.hateoas.mvc.TypeConstrainedMappingJackson2HttpMessageConverter;
+import org.springframework.hateoas.uber.UberJsonLinkDiscoverer;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.Jackson2ObjectMapperFactoryBean;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -107,9 +108,11 @@ class HypermediaSupportBeanDefinitionRegistrar implements ImportBeanDefinitionRe
 			if (JSONPATH_PRESENT) {
 
 				AbstractBeanDefinition linkDiscovererBeanDefinition = getLinkDiscovererBeanDefinition(type);
-				registerBeanDefinition(
-						new BeanDefinitionHolder(linkDiscovererBeanDefinition, BeanDefinitionReaderUtils.generateBeanName(
-								linkDiscovererBeanDefinition, registry)), registry);
+
+				if (linkDiscovererBeanDefinition != null) {
+					registerBeanDefinition(new BeanDefinitionHolder(linkDiscovererBeanDefinition,
+							BeanDefinitionReaderUtils.generateBeanName(linkDiscovererBeanDefinition, registry)), registry);
+				}
 			}
 		}
 
@@ -189,8 +192,11 @@ class HypermediaSupportBeanDefinitionRegistrar implements ImportBeanDefinitionRe
 			case HAL:
 				definition = new RootBeanDefinition(HalLinkDiscoverer.class);
 				break;
+			case UBER:
+				definition = new RootBeanDefinition(UberJsonLinkDiscoverer.class);
+				break;
 			default:
-				throw new IllegalStateException(String.format("Unsupported hypermedia type %s!", type));
+				return null;
 		}
 
 		definition.setSource(this);
@@ -251,8 +257,8 @@ class HypermediaSupportBeanDefinitionRegistrar implements ImportBeanDefinitionRe
 			if (bean instanceof AnnotationMethodHandlerAdapter) {
 
 				AnnotationMethodHandlerAdapter adapter = (AnnotationMethodHandlerAdapter) bean;
-				List<HttpMessageConverter<?>> augmentedConverters = potentiallyRegisterModule(Arrays.asList(adapter
-						.getMessageConverters()));
+				List<HttpMessageConverter<?>> augmentedConverters = potentiallyRegisterModule(
+						Arrays.asList(adapter.getMessageConverters()));
 				adapter
 						.setMessageConverters(augmentedConverters.toArray(new HttpMessageConverter<?>[augmentedConverters.size()]));
 			}

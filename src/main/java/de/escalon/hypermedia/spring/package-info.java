@@ -6,7 +6,7 @@
  * rather it delegates to {@link de.escalon.hypermedia.spring.AffordanceBuilderFactory} for creation. The {@code
  * AffordanceBuilderFactory} analyzes the request mapping, the sample arguments and the target handler method to create
  * an {@code AffordanceBuilder}. The new {@code AffordanceBuilder} receives: <ul> <li>a {@link
- * de.escalon.hypermedia.affordance.PartialUriTemplate} created from request mapping information with applied sample
+ * org.springframework.hateoas.UriTemplate} created from request mapping information with applied sample
  * arguments. Template variables which could not be satisfied are kept as variables, no matter if they are required or
  * optional</li> <li>an {@link de.escalon.hypermedia.affordance.ActionDescriptor} which represents the method that
  * handles requests to the URI template resource</li> </ul> <li>The affordance builder has methods to supply information

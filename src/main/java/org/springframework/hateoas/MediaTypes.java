@@ -22,6 +22,7 @@ import org.springframework.http.MediaType;
  * 
  * @author Oliver Gierke
  * @author Przemek Nowak
+ * @author Dietrich Schulten
  */
 public class MediaTypes {
 
@@ -34,4 +35,24 @@ public class MediaTypes {
 	 * Public constant media type for {@code application/hal+json}.
 	 */
 	public static final MediaType HAL_JSON = MediaType.valueOf(HAL_JSON_VALUE);
+
+	public static final String HAL_FORMS_JSON_VALUE = "application/prs.hal-forms+json";
+
+	public static final MediaType HAL_FORMS_JSON = MediaType.parseMediaType(HAL_FORMS_JSON_VALUE);
+
+	public static final String JSONLD_JSON_VALUE = "application/ld+json";
+
+	public static final MediaType JSONLD_JSON = MediaType.parseMediaType(JSONLD_JSON_VALUE);
+
+	public static final String UBER_XML_VALUE = "application/vnd.amundsen-uber+xml";
+
+	public static final MediaType UBER_XML = MediaType.parseMediaType(UBER_XML_VALUE);
+
+	public static final String UBER_JSON_VALUE = "application/vnd.amundsen-uber+json";
+
+	public static final MediaType UBER_JSON = MediaType.parseMediaType(UBER_JSON_VALUE);
+
+	public static final String SIREN_JSON_VALUE = "application/vnd.siren+json";
+
+	public static final MediaType SIREN_JSON = MediaType.parseMediaType(SIREN_JSON_VALUE);
 }

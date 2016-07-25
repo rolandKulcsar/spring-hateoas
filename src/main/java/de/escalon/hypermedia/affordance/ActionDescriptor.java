@@ -1,9 +1,13 @@
 package de.escalon.hypermedia.affordance;
 
+import de.escalon.hypermedia.action.Cardinality;
+
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
-import de.escalon.hypermedia.action.Cardinality;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 
 /**
  * Represents a descriptor for a http method execution. Created by Dietrich on 17.05.2015.
@@ -22,21 +26,21 @@ public interface ActionDescriptor {
 	 *
 	 * @return method
 	 */
-	String getHttpMethod();
+	HttpMethod getHttpMethod();
 
 	/**
 	 * Gets contentType consumed by the action
 	 * 
 	 * @return
 	 */
-	String getConsumes();
+	List<MediaType> getConsumes();
 
 	/**
 	 * Gets contentType produced by the action
 	 * 
 	 * @return
 	 */
-	String getProduces();
+	List<MediaType> getProduces();
 
 	/**
 	 * Gets names of path variables, if URL has variables.

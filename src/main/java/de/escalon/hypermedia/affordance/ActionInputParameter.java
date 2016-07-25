@@ -1,10 +1,12 @@
 package de.escalon.hypermedia.affordance;
 
+import de.escalon.hypermedia.action.Type;
+
 import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Map;
 
-import de.escalon.hypermedia.action.Type;
+import org.springframework.hateoas.affordance.Suggestions;
 
 /**
  * Interface to represent an input parameter to a resource handler method, independent of a particular ReST framework.
@@ -110,6 +112,8 @@ public interface ActionInputParameter {
 	 */
 	<T> List<Suggest<T>> getPossibleValues(ActionDescriptor actionDescriptor);
 
+	Suggestions getSuggestions();
+
 	/**
 	 * Establish possible values for this parameter
 	 * 
@@ -139,8 +143,8 @@ public interface ActionInputParameter {
 	boolean isArrayOrCollection();
 
 	/**
-	 * Is this action input parameter required, based on the presence of a default value, the parameter annotations and
-	 * the kind of input parameter.
+	 * Is this action input parameter required, bTPERased on the presence of a default value, the parameter annotations
+	 * and the kind of input parameter.
 	 *
 	 * @return true if required
 	 */

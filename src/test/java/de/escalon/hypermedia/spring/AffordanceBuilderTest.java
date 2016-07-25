@@ -10,6 +10,14 @@
 
 package de.escalon.hypermedia.spring;
 
+import static org.hamcrest.CoreMatchers.*;
+import static org.junit.Assert.*;
+
+import de.escalon.hypermedia.affordance.ActionDescriptor;
+import de.escalon.hypermedia.affordance.ActionInputParameter;
+import de.escalon.hypermedia.affordance.Affordance;
+import de.escalon.hypermedia.affordance.Suggest;
+
 import java.util.List;
 
 import org.hamcrest.Matchers;
@@ -30,61 +38,58 @@ import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import de.escalon.hypermedia.affordance.ActionDescriptor;
-import de.escalon.hypermedia.affordance.ActionInputParameter;
-import de.escalon.hypermedia.affordance.Affordance;
-import de.escalon.hypermedia.affordance.Suggest;
-
 public class AffordanceBuilderTest {
 
 	@Before
 	public void setUp() {
+
 		MockHttpServletRequest request = MockMvcRequestBuilders.get("http://example.com/")
 				.buildRequest(new MockServletContext());
-		final RequestAttributes requestAttributes = new ServletRequestAttributes(request);
+
+		RequestAttributes requestAttributes = new ServletRequestAttributes(request);
 		RequestContextHolder.setRequestAttributes(requestAttributes);
 	}
 
-	public static class Thing {
+	static class Thing {}
 
-	}
-
-	enum EventStatusType {
+	static enum EventStatusType {
 		EVENT_POSTPONED, EVENT_RESCHEDULED, EVENT_SCHEDULED, EVENT_CANCELLED
-
 	}
 
-	public static class DummyController {
+	static class DummyController {
 
 		@RequestMapping("/things")
-		public ResponseEntity createThing(@RequestBody Thing thing) {
-			return new ResponseEntity(HttpStatus.CREATED);
+		public ResponseEntity<?> createThing(@RequestBody Thing thing) {
+			return new ResponseEntity<Void>(HttpStatus.CREATED);
 		}
 
 		@RequestMapping(value = "/things/{id}/eventStatus", method = RequestMethod.PUT)
-		public ResponseEntity updateThing(@PathVariable int id, @RequestParam EventStatusType eventStatus) {
-			return new ResponseEntity(HttpStatus.OK);
+		public ResponseEntity<?> updateThing(@PathVariable int id, @RequestParam EventStatusType eventStatus) {
+			return new ResponseEntity<Void>(HttpStatus.OK);
 		}
 
 		@RequestMapping(value = "/things/{id}", method = RequestMethod.PUT)
-		public ResponseEntity updateThing(@PathVariable int id, @RequestBody Thing thing) {
-			return new ResponseEntity(HttpStatus.OK);
+		public ResponseEntity<?> updateThing(@PathVariable int id, @RequestBody Thing thing) {
+			return new ResponseEntity<Void>(HttpStatus.OK);
 		}
-
 	}
 
 	@Test
 	public void testWithSingleRel() throws Exception {
-		final Affordance affordance = AffordanceBuilder
+
+		Affordance affordance = AffordanceBuilder
 				.linkTo(AffordanceBuilder.methodOn(DummyController.class).createThing(new Thing())).rel("next").build();
+
 		Assert.assertEquals("Link: <http://example.com/things>; rel=\"next\"", affordance.toString());
 	}
 
 	@Test
 	public void testWithTitle() {
-		final Affordance affordance = AffordanceBuilder
+
+		Affordance affordance = AffordanceBuilder
 				.linkTo(AffordanceBuilder.methodOn(DummyController.class).createThing(new Thing())).withTitle("my-title")
 				.rel("next").build();
+
 		Assert.assertEquals("Link: <http://example.com/things>; rel=\"next\"; title=\"my-title\"", affordance.toString());
 	}
 
@@ -99,11 +104,13 @@ public class AffordanceBuilderTest {
 
 	@Test
 	public void testWithAnchor() {
-		final Affordance affordance = AffordanceBuilder
+
+		Affordance affordance = AffordanceBuilder
 				.linkTo(AffordanceBuilder.methodOn(DummyController.class).createThing(new Thing()))
 				.withAnchor("http://api.example.com/api").rel("next").build();
-		Assert.assertEquals("Link: <http://example.com/things>; rel=\"next\"; anchor=\"http://api.example.com/api\"",
-				affordance.toString());
+
+		assertThat(affordance.toString(),
+				is("Link: <http://example.com/things>; rel=\"next\"; anchor=\"http://api.example.com/api\""));
 	}
 
 	@Test
@@ -187,26 +194,25 @@ public class AffordanceBuilderTest {
 		final Affordance affordance = AffordanceBuilder
 				.linkTo(AffordanceBuilder.methodOn(DummyController.class).createThing(new Thing())).rel("next").rel("thing")
 				.reverseRel("reverted", "for-hal").build();
-		Assert.assertEquals("Link: <http://example.com/things>; rel=\"next thing for-hal\"; rev=\"reverted\"",
-				affordance.toString());
+
+		assertThat(affordance.toString(),
+				is("Link: <http://example.com/things>; rel=\"next thing for-hal\"; rev=\"reverted\""));
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testRejectsEmptyRel() throws Exception {
-		final Affordance affordance = AffordanceBuilder
-				.linkTo(AffordanceBuilder.methodOn(DummyController.class).createThing(new Thing())).rel("").build();
+		AffordanceBuilder.linkTo(AffordanceBuilder.methodOn(DummyController.class).createThing(new Thing())).rel("")
+				.build();
 	}
 
 	@Test(expected = IllegalStateException.class)
 	public void testRejectsMissingRel() throws Exception {
-		final Affordance affordance = AffordanceBuilder
-				.linkTo(AffordanceBuilder.methodOn(DummyController.class).createThing(new Thing())).build();
+		AffordanceBuilder.linkTo(AffordanceBuilder.methodOn(DummyController.class).createThing(new Thing())).build();
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testRejectsNullRel() throws Exception {
-		final Affordance affordance = AffordanceBuilder
-				.linkTo(AffordanceBuilder.methodOn(DummyController.class).createThing(new Thing())).rel(null).build();
+		AffordanceBuilder.linkTo(AffordanceBuilder.methodOn(DummyController.class).createThing(new Thing())).rel(null)
+				.build();
 	}
-
 }

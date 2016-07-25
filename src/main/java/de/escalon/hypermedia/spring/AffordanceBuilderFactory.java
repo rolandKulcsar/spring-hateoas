@@ -10,6 +10,8 @@
 
 package de.escalon.hypermedia.spring;
 
+import de.escalon.hypermedia.affordance.ActionDescriptor;
+
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashMap;
@@ -18,15 +20,13 @@ import java.util.Map;
 import java.util.Set;
 
 import org.springframework.hateoas.MethodLinkBuilderFactory;
+import org.springframework.hateoas.UriTemplate;
 import org.springframework.hateoas.core.AnnotationMappingDiscoverer;
 import org.springframework.hateoas.core.DummyInvocationUtils;
 import org.springframework.hateoas.core.MappingDiscoverer;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
-
-import de.escalon.hypermedia.affordance.ActionDescriptor;
-import de.escalon.hypermedia.affordance.PartialUriTemplate;
 
 /**
  * Factory for {@link AffordanceBuilder}s in a Spring MVC rest service. Normally one should use the static methods of
@@ -46,11 +46,11 @@ public class AffordanceBuilderFactory implements MethodLinkBuilderFactory<Afford
 
 		String pathMapping = MAPPING_DISCOVERER.getMapping(controller, method);
 
-		final Set<String> params = getRequestParamNames(method, parameters);
+		Set<String> params = getRequestParamNames(method, parameters);
 		String query = join(params);
 		String mapping = StringUtils.isEmpty(query) ? pathMapping : pathMapping + "{?" + query + "}";
 
-		PartialUriTemplate partialUriTemplate = new PartialUriTemplate(
+		UriTemplate partialUriTemplate = new UriTemplate(
 				AffordanceBuilder.getBuilder().build().toString() + mapping);
 
 		Map<String, Object> values = new HashMap<String, Object>();
@@ -91,7 +91,7 @@ public class AffordanceBuilderFactory implements MethodLinkBuilderFactory<Afford
 
 		String mapping = MAPPING_DISCOVERER.getMapping(controller);
 
-		PartialUriTemplate partialUriTemplate = new PartialUriTemplate(mapping == null ? "/" : mapping);
+		UriTemplate partialUriTemplate = new UriTemplate(mapping == null ? "/" : mapping);
 
 		Map<String, Object> values = new HashMap<String, Object>();
 		Iterator<String> names = partialUriTemplate.getVariableNames().iterator();
@@ -108,7 +108,7 @@ public class AffordanceBuilderFactory implements MethodLinkBuilderFactory<Afford
 	@Override
 	public AffordanceBuilder linkTo(Class<?> controller, Map<String, ?> parameters) {
 		String mapping = MAPPING_DISCOVERER.getMapping(controller);
-		PartialUriTemplate partialUriTemplate = new PartialUriTemplate(mapping == null ? "/" : mapping);
+		UriTemplate partialUriTemplate = new UriTemplate(mapping == null ? "/" : mapping);
 		return new AffordanceBuilder().slash(partialUriTemplate.expand(parameters));
 	}
 
@@ -127,7 +127,7 @@ public class AffordanceBuilderFactory implements MethodLinkBuilderFactory<Afford
 		String query = join(params);
 		String mapping = StringUtils.isEmpty(query) ? pathMapping : pathMapping + "{?" + query + "}";
 
-		PartialUriTemplate partialUriTemplate = new PartialUriTemplate(
+		UriTemplate partialUriTemplate = new UriTemplate(
 				AffordanceBuilder.getBuilder().build().toString() + mapping);
 
 		Iterator<Object> classMappingParameters = invocations.getObjectParameters();
