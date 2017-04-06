@@ -1,9 +1,7 @@
 package org.springframework.hateoas.halforms.beans;
 
-import static de.escalon.hypermedia.spring.AffordanceBuilder.linkTo;
-import static de.escalon.hypermedia.spring.AffordanceBuilder.methodOn;
-import static de.escalon.hypermedia.spring.Path.on;
-import static de.escalon.hypermedia.spring.Path.path;
+import static de.escalon.hypermedia.spring.AffordanceBuilder.*;
+import static de.escalon.hypermedia.spring.Path.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,12 +9,21 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map.Entry;
 
+import de.escalon.hypermedia.action.DTOParam;
+import de.escalon.hypermedia.action.Input;
+import de.escalon.hypermedia.action.Options;
+import de.escalon.hypermedia.action.Type;
+import de.escalon.hypermedia.affordance.ActionInputParameter;
+import de.escalon.hypermedia.affordance.SuggestImpl;
+import de.escalon.hypermedia.spring.AffordanceBuilder;
+
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.ResourceSupport;
 import org.springframework.hateoas.Resources;
 import org.springframework.hateoas.core.DummyInvocationUtils;
+import org.springframework.hateoas.affordance.Suggest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -26,15 +33,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-
-import de.escalon.hypermedia.action.DTOParam;
-import de.escalon.hypermedia.action.Input;
-import de.escalon.hypermedia.action.Options;
-import de.escalon.hypermedia.action.Type;
-import de.escalon.hypermedia.affordance.ActionInputParameter;
-import de.escalon.hypermedia.affordance.Suggest;
-import de.escalon.hypermedia.affordance.SuggestImpl;
-import de.escalon.hypermedia.spring.AffordanceBuilder;
 
 @Controller
 @RequestMapping(value = "/test")

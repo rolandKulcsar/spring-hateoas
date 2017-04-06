@@ -13,7 +13,7 @@ import de.escalon.hypermedia.action.Options;
 import de.escalon.hypermedia.action.Select;
 import de.escalon.hypermedia.action.Type;
 import de.escalon.hypermedia.affordance.SimpleSuggest;
-import de.escalon.hypermedia.affordance.Suggest;
+import org.springframework.hateoas.affordance.Suggest;
 import de.escalon.hypermedia.affordance.SuggestObjectWrapper;
 import de.escalon.hypermedia.affordance.SuggestType;
 

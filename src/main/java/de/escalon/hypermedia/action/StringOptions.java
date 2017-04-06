@@ -14,7 +14,7 @@ import java.util.List;
 
 import de.escalon.hypermedia.affordance.ActionDescriptor;
 import de.escalon.hypermedia.affordance.SimpleSuggest;
-import de.escalon.hypermedia.affordance.Suggest;
+import org.springframework.hateoas.affordance.Suggest;
 import de.escalon.hypermedia.affordance.SuggestObjectWrapper;
 
 public class StringOptions implements Options<SuggestObjectWrapper<String>> {

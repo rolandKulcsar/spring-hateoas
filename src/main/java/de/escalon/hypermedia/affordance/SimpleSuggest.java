@@ -3,6 +3,8 @@ package de.escalon.hypermedia.affordance;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.hateoas.affordance.Suggest;
+
 public class SimpleSuggest<T> extends SuggestImpl<SuggestObjectWrapper<T>> {
 
 	@SuppressWarnings("unchecked")

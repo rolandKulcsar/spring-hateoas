@@ -1,13 +1,13 @@
 package org.springframework.hateoas.core;
 
-import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
-import lombok.ToString;
-
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
 import org.springframework.cglib.proxy.Callback;
 import org.springframework.cglib.proxy.Enhancer;
@@ -57,7 +57,7 @@ public class Recorder implements MethodInterceptor {
 		return currentMock.getObject();
 	}
 
-	private String getPropertyName(Method method) {
+	String getPropertyName(Method method) {
 
 		for (PropertyNameDetectionStrategy strategy : strategies) {
 

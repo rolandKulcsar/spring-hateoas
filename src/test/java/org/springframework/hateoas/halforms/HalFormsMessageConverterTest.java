@@ -8,22 +8,22 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.*;
 
+import java.io.IOException;
+import java.util.List;
+
 import de.escalon.hypermedia.action.DTOParam;
 import de.escalon.hypermedia.action.Input;
 import de.escalon.hypermedia.affordance.Affordance;
 import de.escalon.hypermedia.spring.AffordanceBuilder;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
-
-import java.io.IOException;
-import java.util.List;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -289,7 +289,7 @@ public class HalFormsMessageConverterTest {
 		assertThat(json, hasJsonPath("$._templates.default"));
 		assertThat(json, hasJsonPath("$._templates.default.method", equalTo("POST")));
 		assertThat(json, hasJsonPath("$._templates.default.contentType", equalTo("application/json")));
-		assertThat(json, hasJsonPath("$._templates.default.properties", hasSize(5)));
+		assertThat(json, hasJsonPath("$._templates.default.properties", hasSize(4)));
 	}
 
 	@Test

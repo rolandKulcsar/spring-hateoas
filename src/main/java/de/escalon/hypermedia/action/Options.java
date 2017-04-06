@@ -15,7 +15,7 @@ package de.escalon.hypermedia.action;
 
 import java.util.List;
 
-import de.escalon.hypermedia.affordance.Suggest;
+import org.springframework.hateoas.affordance.Suggest;
 
 /**
  * Allows to determine possible values for an argument annotated with {@link Select}.

@@ -4,6 +4,8 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.hateoas.affordance.Suggest;
+
 public class SuggestImpl<T> implements Suggest<T> {
 
 	private final T value;

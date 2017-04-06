@@ -1,22 +1,18 @@
 package org.springframework.hateoas.siren;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.io.FileUtils;
+import de.escalon.hypermedia.affordance.SuggestType;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.hateoas.siren.SirenEntity;
-import org.springframework.hateoas.siren.SirenUtils;
+
 import org.springframework.hateoas.xhtml.beans.DummyController;
 import org.springframework.hateoas.xhtml.beans.Item;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import de.escalon.hypermedia.affordance.SuggestType;
 
 public class SirenItemsTest {
 
@@ -182,7 +178,8 @@ public class SirenItemsTest {
 			SirenEntity entity = new SirenEntity();
 			sirenUtils.toSirenEntity(entity, item);
 			String json = objectMapper.valueToTree(entity).toString();
-			FileUtils.writeStringToFile(new File("siren.html"), json);
+
+			// TODO: Add some assertions about the final JSON structure
 
 		}
 	}

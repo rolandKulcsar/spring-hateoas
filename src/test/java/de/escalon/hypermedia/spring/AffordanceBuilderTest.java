@@ -16,7 +16,7 @@ import static org.junit.Assert.*;
 import de.escalon.hypermedia.affordance.ActionDescriptor;
 import de.escalon.hypermedia.affordance.ActionInputParameter;
 import de.escalon.hypermedia.affordance.Affordance;
-import de.escalon.hypermedia.affordance.Suggest;
+import org.springframework.hateoas.affordance.Suggest;
 
 import java.util.List;
 

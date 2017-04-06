@@ -9,7 +9,7 @@ import org.springframework.hateoas.Identifiable;
 import org.springframework.hateoas.halforms.beans.DummyController.RemoteOptions;
 
 import de.escalon.hypermedia.action.Options;
-import de.escalon.hypermedia.affordance.Suggest;
+import org.springframework.hateoas.affordance.Suggest;
 import de.escalon.hypermedia.affordance.SuggestImpl;
 import de.escalon.hypermedia.spring.AffordanceBuilder;
 

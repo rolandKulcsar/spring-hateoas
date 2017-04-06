@@ -13,6 +13,16 @@
 
 package de.escalon.hypermedia.spring;
 
+import java.lang.annotation.Annotation;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+
 import de.escalon.hypermedia.action.Input;
 import de.escalon.hypermedia.action.Options;
 import de.escalon.hypermedia.action.Select;
@@ -23,18 +33,8 @@ import de.escalon.hypermedia.affordance.ActionInputParameter;
 import de.escalon.hypermedia.affordance.DataType;
 import de.escalon.hypermedia.affordance.ParameterType;
 import de.escalon.hypermedia.affordance.SimpleSuggest;
-import de.escalon.hypermedia.affordance.Suggest;
+import org.springframework.hateoas.affordance.Suggest;
 import de.escalon.hypermedia.affordance.SuggestType;
-
-import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.core.LocalVariableTableParameterNameDiscoverer;
@@ -442,7 +442,7 @@ public class SpringActionInputParameter implements ActionInputParameter {
 
 			instance = instance == null ? BeanUtils.instantiateClass(options) : instance;
 
-			return instance.getSuggestions(descriptor, this);
+			return instance.getSuggestions();
 		}
 
 		return getDefaultSuggestions(getParameterType());

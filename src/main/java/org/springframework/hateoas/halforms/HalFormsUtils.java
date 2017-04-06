@@ -27,6 +27,7 @@ import java.util.Map;
 
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.ResourceSupport;
+import org.springframework.hateoas.affordance.Suggest;
 import org.springframework.hateoas.affordance.Suggestions;
 import org.springframework.hateoas.core.EmbeddedWrapper;
 import org.springframework.hateoas.core.EmbeddedWrappers;
@@ -109,7 +110,7 @@ class HalFormsUtils {
 
 		String value = null;
 
-		List<de.escalon.hypermedia.affordance.Suggest<Object>> possibleValues = actionInputParameter
+		List<Suggest<Object>> possibleValues = actionInputParameter
 				.getPossibleValues(actionDescriptor);
 
 		boolean multi = false;
@@ -130,7 +131,7 @@ class HalFormsUtils {
 			}
 			List<Object> values = new ArrayList<Object>();
 
-			for (de.escalon.hypermedia.affordance.Suggest<Object> possibleValue : possibleValues) {
+			for (Suggest<Object> possibleValue : possibleValues) {
 				values.add(possibleValue.getValue());
 			}
 

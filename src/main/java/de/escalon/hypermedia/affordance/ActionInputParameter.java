@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.hateoas.affordance.Suggestions;
+import org.springframework.hateoas.affordance.Suggest;
 
 /**
  * Interface to represent an input parameter to a resource handler method, independent of a particular ReST framework.

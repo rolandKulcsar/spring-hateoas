@@ -32,7 +32,7 @@ import de.escalon.hypermedia.action.Input;
 import de.escalon.hypermedia.action.Options;
 import de.escalon.hypermedia.action.Type;
 import de.escalon.hypermedia.affordance.ActionInputParameter;
-import de.escalon.hypermedia.affordance.Suggest;
+import org.springframework.hateoas.affordance.Suggest;
 import de.escalon.hypermedia.affordance.SuggestImpl;
 import de.escalon.hypermedia.spring.AffordanceBuilder;
 

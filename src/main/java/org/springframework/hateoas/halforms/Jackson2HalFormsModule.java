@@ -18,6 +18,7 @@ import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Links;
 import org.springframework.hateoas.RelProvider;
 import org.springframework.hateoas.Resources;
+import org.springframework.hateoas.affordance.SuggestDeserializer;
 import org.springframework.hateoas.affordance.Suggestions;
 import org.springframework.hateoas.affordance.Suggestions.ExternalSuggestions;
 import org.springframework.hateoas.affordance.Suggestions.RemoteSuggestions;
