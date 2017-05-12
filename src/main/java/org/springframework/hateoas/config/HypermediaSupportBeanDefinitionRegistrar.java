@@ -55,7 +55,10 @@ import org.springframework.hateoas.core.EvoInflectorRelProvider;
 import org.springframework.hateoas.hal.CurieProvider;
 import org.springframework.hateoas.hal.HalLinkDiscoverer;
 import org.springframework.hateoas.hal.Jackson2HalModule;
+import org.springframework.hateoas.hal.forms.HalFormsLinkDiscoverer;
+import org.springframework.hateoas.hal.forms.Jackson2HalFormsModule;
 import org.springframework.hateoas.mvc.TypeConstrainedMappingJackson2HttpMessageConverter;
+import org.springframework.hateoas.uber.UberLinkDiscoverer;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.Jackson2ObjectMapperFactoryBean;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -66,8 +69,10 @@ import org.springframework.util.ClassUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 /**
  * {@link ImportBeanDefinitionRegistrar} implementation to activate hypermedia support based on the configured
@@ -75,12 +80,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * activated as well).
  * 
  * @author Oliver Gierke
+ * @author Greg Turnquist
  */
 class HypermediaSupportBeanDefinitionRegistrar implements ImportBeanDefinitionRegistrar {
 
 	private static final String DELEGATING_REL_PROVIDER_BEAN_NAME = "_relProvider";
 	private static final String LINK_DISCOVERER_REGISTRY_BEAN_NAME = "_linkDiscovererRegistry";
 	private static final String HAL_OBJECT_MAPPER_BEAN_NAME = "_halObjectMapper";
+	private static final String HAL_FORMS_OBJECT_MAPPER_BEAN_NAME = "_halFormsObjectMapper";
+	private static final String UBER_OBJECT_MAPPER_BEAN_NAME = "_uberObjectMapper";
 	private static final String MESSAGE_SOURCE_BEAN_NAME = "linkRelationMessageSource";
 
 	private static final boolean JACKSON2_PRESENT = ClassUtils.isPresent("com.fasterxml.jackson.databind.ObjectMapper",
@@ -107,24 +115,24 @@ class HypermediaSupportBeanDefinitionRegistrar implements ImportBeanDefinitionRe
 			if (JSONPATH_PRESENT) {
 
 				AbstractBeanDefinition linkDiscovererBeanDefinition = getLinkDiscovererBeanDefinition(type);
-				registerBeanDefinition(new BeanDefinitionHolder(linkDiscovererBeanDefinition,
-						BeanDefinitionReaderUtils.generateBeanName(linkDiscovererBeanDefinition, registry)), registry);
+
+				if (linkDiscovererBeanDefinition != null) {
+					registerBeanDefinition(new BeanDefinitionHolder(linkDiscovererBeanDefinition,
+							BeanDefinitionReaderUtils.generateBeanName(linkDiscovererBeanDefinition, registry)), registry);
+				}
 			}
 		}
 
 		if (types.contains(HypermediaType.HAL)) {
+			registerHypermediaComponents(metadata, registry, HAL_OBJECT_MAPPER_BEAN_NAME);
+		}
 
-			if (JACKSON2_PRESENT) {
+		if (types.contains(HypermediaType.HAL_FORMS)) {
+			registerHypermediaComponents(metadata, registry, HAL_FORMS_OBJECT_MAPPER_BEAN_NAME);
+		}
 
-				BeanDefinitionBuilder halQueryMapperBuilder = rootBeanDefinition(ObjectMapper.class);
-				registerSourcedBeanDefinition(halQueryMapperBuilder, metadata, registry, HAL_OBJECT_MAPPER_BEAN_NAME);
-
-				BeanDefinitionBuilder customizerBeanDefinition = rootBeanDefinition(DefaultObjectMapperCustomizer.class);
-				registerSourcedBeanDefinition(customizerBeanDefinition, metadata, registry);
-
-				BeanDefinitionBuilder builder = rootBeanDefinition(Jackson2ModuleRegisteringBeanPostProcessor.class);
-				registerSourcedBeanDefinition(builder, metadata, registry);
-			}
+		if (types.contains(HypermediaType.UBER)) {
+			registerHypermediaComponents(metadata, registry, UBER_OBJECT_MAPPER_BEAN_NAME);
 		}
 
 		if (!types.isEmpty()) {
@@ -141,6 +149,21 @@ class HypermediaSupportBeanDefinitionRegistrar implements ImportBeanDefinitionRe
 		}
 
 		registerRelProviderPluginRegistryAndDelegate(registry);
+	}
+
+	private static void registerHypermediaComponents(AnnotationMetadata metadata, BeanDefinitionRegistry registry, String objectMapperBeanName) {
+
+		if (JACKSON2_PRESENT) {
+
+			BeanDefinitionBuilder queryMapperBuilder = rootBeanDefinition(ObjectMapper.class);
+			registerSourcedBeanDefinition(queryMapperBuilder, metadata, registry, objectMapperBeanName);
+
+			BeanDefinitionBuilder customizerBeanDefinition = rootBeanDefinition(DefaultObjectMapperCustomizer.class);
+			registerSourcedBeanDefinition(customizerBeanDefinition, metadata, registry);
+
+			BeanDefinitionBuilder builder = rootBeanDefinition(Jackson2ModuleRegisteringBeanPostProcessor.class);
+			registerSourcedBeanDefinition(builder, metadata, registry);
+		}
 	}
 
 	/**
@@ -188,8 +211,14 @@ class HypermediaSupportBeanDefinitionRegistrar implements ImportBeanDefinitionRe
 			case HAL:
 				definition = new RootBeanDefinition(HalLinkDiscoverer.class);
 				break;
+			case HAL_FORMS:
+				definition = new RootBeanDefinition(HalFormsLinkDiscoverer.class);
+				break;
+			case UBER:
+				definition = new RootBeanDefinition(UberLinkDiscoverer.class);
+				break;
 			default:
-				throw new IllegalStateException(String.format("Unsupported hypermedia type %s!", type));
+				return null;
 		}
 
 		definition.setSource(this);
@@ -283,21 +312,61 @@ class HypermediaSupportBeanDefinitionRegistrar implements ImportBeanDefinitionRe
 
 			CurieProvider curieProvider = getCurieProvider(beanFactory);
 			RelProvider relProvider = beanFactory.getBean(DELEGATING_REL_PROVIDER_BEAN_NAME, RelProvider.class);
-			ObjectMapper halObjectMapper = beanFactory.getBean(HAL_OBJECT_MAPPER_BEAN_NAME, ObjectMapper.class);
-			MessageSourceAccessor linkRelationMessageSource = beanFactory.getBean(MESSAGE_SOURCE_BEAN_NAME,
-					MessageSourceAccessor.class);
-
-			halObjectMapper.registerModule(new Jackson2HalModule());
-			halObjectMapper.setHandlerInstantiator(new Jackson2HalModule.HalHandlerInstantiator(relProvider, curieProvider,
-					linkRelationMessageSource, beanFactory));
-
-			MappingJackson2HttpMessageConverter halConverter = new TypeConstrainedMappingJackson2HttpMessageConverter(
-					ResourceSupport.class);
-			halConverter.setSupportedMediaTypes(Arrays.asList(HAL_JSON));
-			halConverter.setObjectMapper(halObjectMapper);
 
 			List<HttpMessageConverter<?>> result = new ArrayList<HttpMessageConverter<?>>(converters.size());
-			result.add(halConverter);
+
+			if (beanFactory.containsBean(HAL_OBJECT_MAPPER_BEAN_NAME)) {
+
+				ObjectMapper halObjectMapper = beanFactory.getBean(HAL_OBJECT_MAPPER_BEAN_NAME, ObjectMapper.class);
+				MessageSourceAccessor linkRelationMessageSource = beanFactory.getBean(MESSAGE_SOURCE_BEAN_NAME,
+					MessageSourceAccessor.class);
+
+				halObjectMapper.registerModule(new Jackson2HalModule());
+				halObjectMapper.setHandlerInstantiator(new Jackson2HalModule.HalHandlerInstantiator(relProvider, curieProvider,
+					linkRelationMessageSource, beanFactory));
+
+				MappingJackson2HttpMessageConverter halConverter = new TypeConstrainedMappingJackson2HttpMessageConverter(
+					ResourceSupport.class);
+				halConverter.setSupportedMediaTypes(Arrays.asList(HAL_JSON));
+				halConverter.setObjectMapper(halObjectMapper);
+				result.add(halConverter);
+			}
+
+			if (beanFactory.containsBean(HAL_FORMS_OBJECT_MAPPER_BEAN_NAME)) {
+
+				ObjectMapper halFormsObjectMapper = beanFactory.getBean(HAL_FORMS_OBJECT_MAPPER_BEAN_NAME, ObjectMapper.class);
+				MessageSourceAccessor linkRelationMessageSource = beanFactory.getBean(MESSAGE_SOURCE_BEAN_NAME,
+					MessageSourceAccessor.class);
+
+				halFormsObjectMapper.registerModule(new Jackson2HalFormsModule());
+				halFormsObjectMapper.setHandlerInstantiator(new Jackson2HalFormsModule.HalFormsHandlerInstantiator(relProvider, curieProvider,
+					linkRelationMessageSource, true));
+
+				MappingJackson2HttpMessageConverter halFormsConverter = new TypeConstrainedMappingJackson2HttpMessageConverter(
+					ResourceSupport.class);
+				halFormsConverter.setSupportedMediaTypes(Arrays.asList(HAL_FORMS_JSON));
+				halFormsConverter.setObjectMapper(halFormsObjectMapper);
+				result.add(halFormsConverter);
+			}
+
+			if (beanFactory.containsBean(UBER_OBJECT_MAPPER_BEAN_NAME)) {
+
+				ObjectMapper uberObjectMapper = beanFactory.getBean(UBER_OBJECT_MAPPER_BEAN_NAME, ObjectMapper.class);
+				MessageSourceAccessor linkRelationMessageSource = beanFactory.getBean(MESSAGE_SOURCE_BEAN_NAME,
+					MessageSourceAccessor.class);
+
+				uberObjectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+				uberObjectMapper.enable(DeserializationFeature.UNWRAP_ROOT_VALUE);
+				uberObjectMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+				uberObjectMapper.enable(SerializationFeature.WRAP_ROOT_VALUE);
+
+				MappingJackson2HttpMessageConverter uberConverter = new TypeConstrainedMappingJackson2HttpMessageConverter(
+					ResourceSupport.class);
+				uberConverter.setSupportedMediaTypes(Arrays.asList(UBER_JSON));
+				uberConverter.setObjectMapper(uberObjectMapper);
+				result.add(uberConverter);
+			}
+
 			result.addAll(converters);
 			return result;
 		}
@@ -317,6 +386,7 @@ class HypermediaSupportBeanDefinitionRegistrar implements ImportBeanDefinitionRe
 	 * the methods to do that on {@link Jackson2ObjectMapperFactoryBean} were introduced in Spring 4.1 only.
 	 *
 	 * @author Oliver Gierke
+	 * @author Greg Turnquist
 	 */
 	private static class DefaultObjectMapperCustomizer implements BeanPostProcessor {
 
@@ -327,14 +397,13 @@ class HypermediaSupportBeanDefinitionRegistrar implements ImportBeanDefinitionRe
 		@Override
 		public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
 
-			if (!HAL_OBJECT_MAPPER_BEAN_NAME.equals(beanName)) {
-				return bean;
+			if (HAL_OBJECT_MAPPER_BEAN_NAME.equals(beanName) || HAL_FORMS_OBJECT_MAPPER_BEAN_NAME.equals(beanName) || UBER_OBJECT_MAPPER_BEAN_NAME.equals(beanName)) {
+				ObjectMapper mapper = (ObjectMapper) bean;
+				mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+				return mapper;
 			}
 
-			ObjectMapper mapper = (ObjectMapper) bean;
-			mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-
-			return mapper;
+			return bean;
 		}
 
 		/* 
