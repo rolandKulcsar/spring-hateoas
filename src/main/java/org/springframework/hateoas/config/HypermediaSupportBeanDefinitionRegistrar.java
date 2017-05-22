@@ -46,6 +46,7 @@ import org.springframework.hateoas.EntityLinks;
 import org.springframework.hateoas.LinkDiscoverer;
 import org.springframework.hateoas.LinkDiscoverers;
 import org.springframework.hateoas.RelProvider;
+import org.springframework.hateoas.RenderSingleLinks;
 import org.springframework.hateoas.ResourceSupport;
 import org.springframework.hateoas.config.EnableHypermediaSupport.HypermediaType;
 import org.springframework.hateoas.core.AnnotationRelProvider;
@@ -101,6 +102,7 @@ class HypermediaSupportBeanDefinitionRegistrar implements ImportBeanDefinitionRe
 
 		Map<String, Object> attributes = metadata.getAnnotationAttributes(EnableHypermediaSupport.class.getName());
 		Collection<HypermediaType> types = Arrays.asList((HypermediaType[]) attributes.get("type"));
+		RenderSingleLinks renderSingleLinks = (RenderSingleLinks) attributes.get("renderSingleLinks");
 
 		for (HypermediaType type : types) {
 
@@ -123,6 +125,7 @@ class HypermediaSupportBeanDefinitionRegistrar implements ImportBeanDefinitionRe
 				registerSourcedBeanDefinition(customizerBeanDefinition, metadata, registry);
 
 				BeanDefinitionBuilder builder = rootBeanDefinition(Jackson2ModuleRegisteringBeanPostProcessor.class);
+				builder.addPropertyValue("renderSingleLinks", renderSingleLinks);
 				registerSourcedBeanDefinition(builder, metadata, registry);
 			}
 		}
@@ -224,6 +227,7 @@ class HypermediaSupportBeanDefinitionRegistrar implements ImportBeanDefinitionRe
 	static class Jackson2ModuleRegisteringBeanPostProcessor implements BeanPostProcessor, BeanFactoryAware {
 
 		private AutowireCapableBeanFactory beanFactory;
+		private RenderSingleLinks renderSingleLinks;
 
 		/* 
 		 * (non-Javadoc)
@@ -248,13 +252,13 @@ class HypermediaSupportBeanDefinitionRegistrar implements ImportBeanDefinitionRe
 			if (bean instanceof RequestMappingHandlerAdapter) {
 
 				RequestMappingHandlerAdapter adapter = (RequestMappingHandlerAdapter) bean;
-				adapter.setMessageConverters(potentiallyRegisterModule(adapter.getMessageConverters()));
+				adapter.setMessageConverters(potentiallyRegisterModule(adapter.getMessageConverters(), renderSingleLinks));
 			}
 
 			if (bean instanceof RestTemplate) {
 
 				RestTemplate template = (RestTemplate) bean;
-				template.setMessageConverters(potentiallyRegisterModule(template.getMessageConverters()));
+				template.setMessageConverters(potentiallyRegisterModule(template.getMessageConverters(), renderSingleLinks));
 			}
 
 			return bean;
@@ -269,7 +273,8 @@ class HypermediaSupportBeanDefinitionRegistrar implements ImportBeanDefinitionRe
 			return bean;
 		}
 
-		private List<HttpMessageConverter<?>> potentiallyRegisterModule(List<HttpMessageConverter<?>> converters) {
+		private List<HttpMessageConverter<?>> potentiallyRegisterModule(List<HttpMessageConverter<?>> converters,
+																		RenderSingleLinks renderSingleLinks) {
 
 			for (HttpMessageConverter<?> converter : converters) {
 				if (converter instanceof MappingJackson2HttpMessageConverter) {
@@ -289,7 +294,7 @@ class HypermediaSupportBeanDefinitionRegistrar implements ImportBeanDefinitionRe
 
 			halObjectMapper.registerModule(new Jackson2HalModule());
 			halObjectMapper.setHandlerInstantiator(new Jackson2HalModule.HalHandlerInstantiator(relProvider, curieProvider,
-					linkRelationMessageSource, beanFactory));
+					linkRelationMessageSource, beanFactory, renderSingleLinks));
 
 			MappingJackson2HttpMessageConverter halConverter = new TypeConstrainedMappingJackson2HttpMessageConverter(
 					ResourceSupport.class);
@@ -309,6 +314,10 @@ class HypermediaSupportBeanDefinitionRegistrar implements ImportBeanDefinitionRe
 			} catch (NoSuchBeanDefinitionException e) {
 				return null;
 			}
+		}
+
+		public void setRenderSingleLinks(RenderSingleLinks renderSingleLinks) {
+			this.renderSingleLinks = renderSingleLinks;
 		}
 	}
 
