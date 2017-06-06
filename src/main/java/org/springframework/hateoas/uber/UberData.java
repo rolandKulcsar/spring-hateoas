@@ -15,7 +15,6 @@
  */
 package org.springframework.hateoas.uber;
 
-import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,6 +29,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.Singular;
 
+import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.ResourceSupport;
@@ -144,7 +144,7 @@ public class UberData {
 
 		Set<String> propertiesToIgnore = new HashSet<String>(Arrays.asList("links", "id", "class"));
 		try {
-			for (PropertyDescriptor propertyDescriptor : Introspector.getBeanInfo(resource.getClass()).getPropertyDescriptors()) {
+			for (PropertyDescriptor propertyDescriptor : new BeanWrapperImpl(resource).getPropertyDescriptors()) {
 				if (!propertiesToIgnore.contains(propertyDescriptor.getName())) {
 					mappedBean.put(propertyDescriptor.getName(), propertyDescriptor.getReadMethod().invoke(resource));
 				}
