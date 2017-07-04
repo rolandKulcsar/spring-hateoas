@@ -194,15 +194,18 @@ public class UriTemplate implements Iterable<TemplateVariable>, Serializable {
 
 		org.springframework.web.util.UriTemplate baseTemplate = new org.springframework.web.util.UriTemplate(baseUri);
 		UriComponentsBuilder builder = UriComponentsBuilder.fromUri(baseTemplate.expand(parameters));
-		Iterator<Object> iterator = Arrays.asList(parameters).iterator();
+		List<Object> params = Arrays.asList(parameters);
+		ArrayList<Object> remaining = new ArrayList<Object>(params);
+		Iterator<Object> iterator = params.iterator();
 
 		for (TemplateVariable variable : getOptionalVariables()) {
 
 			if (variable.isComposite()) {
-				appendToBuilder(builder, variable, Arrays.asList(parameters));
+				appendCompositeToBuilder(builder, variable, remaining);
 			} else {
 				Object value = iterator.hasNext() ? iterator.next() : null;
 				appendToBuilder(builder, variable, value);
+				remaining.remove(value);
 			}
 		}
 
@@ -227,7 +230,12 @@ public class UriTemplate implements Iterable<TemplateVariable>, Serializable {
 		UriComponentsBuilder builder = UriComponentsBuilder.fromUri(baseTemplate.expand(parameters));
 
 		for (TemplateVariable variable : getOptionalVariables()) {
-			appendToBuilder(builder, variable, parameters.get(variable.getName()));
+
+			if (variable.isComposite()) {
+				appendCompositeToBuilder(builder, variable, Iterable.class.cast(parameters.get(variable.getName())));
+			} else {
+				appendToBuilder(builder, variable, parameters.get(variable.getName()));
+			}
 		}
 
 		return builder.build().toUri();
@@ -299,11 +307,12 @@ public class UriTemplate implements Iterable<TemplateVariable>, Serializable {
 			case FRAGMENT:
 				builder.fragment(value.toString());
 				break;
-			case COMPOSITE:
-				for (Object v : Iterable.class.cast(value)) {
-					builder.queryParam(variable.getName(), v);
-				}
-				break;
+		}
+	}
+
+	private static void appendCompositeToBuilder(UriComponentsBuilder builder, TemplateVariable variable, Iterable<Object> values) {
+		for (Object value : values) {
+			builder.queryParam(variable.getName(), value);
 		}
 	}
 }
