@@ -147,24 +147,6 @@ public class UriTemplateUnitTest {
 		assertThat(uri.toString(), is("/find?year=1965&year=2000&year=2012"));
 	}
 
-	@Test
-	public void expandsCustomVariable() {
-
-		UriTemplate template = new UriTemplate("/find{?address*}");
-
-		URI uri = template.expand(new Address("Newport Beach", "CA"));
-		assertThat(uri.toString(), is("/find?city=Newport%20Beach&state=CA"));
-	}
-
-	@Test
-	public void expandsMultipleCustomVariables() {
-
-		UriTemplate template = new UriTemplate("/find{?address*}");
-
-		URI uri = template.expand(new Address("Bp", "P"), new Address("Bp2", "Q"));
-		assertThat(uri.toString(), is("/find?city=Bp&state=P&city=Bp2&state=Q"));
-	}
-
 	/**
 	 * @see #137
 	 */
@@ -323,32 +305,6 @@ public class UriTemplateUnitTest {
 
 			assertThat(template, hasItem(variable));
 			assertThat(template.getVariableNames(), hasItems(variable.getName()));
-		}
-	}
-
-	private static class Address {
-		private String city;
-		private String state;
-
-		public Address(String city, String state) {
-			this.city = city;
-			this.state = state;
-		}
-
-		public String getCity() {
-			return city;
-		}
-
-		public String getState() {
-			return state;
-		}
-
-		public String foo() {
-			return "";
-		}
-
-		public String getCity(String foo) {
-			return city;
 		}
 	}
 }
