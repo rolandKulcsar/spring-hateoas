@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2015 the original author or authors.
+ * Copyright 2014-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,12 @@
  */
 package org.springframework.hateoas;
 
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
 import java.io.Serializable;
+import java.lang.reflect.Method;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -35,12 +34,13 @@ import org.springframework.web.util.UriComponentsBuilder;
  * Custom URI template to support qualified URI template variables.
  * 
  * @author Oliver Gierke
+ * @author Roland Kulcsár
  * @see http://tools.ietf.org/html/rfc6570
  * @since 0.9
  */
 public class UriTemplate implements Iterable<TemplateVariable>, Serializable {
 
-	private static final Pattern VARIABLE_REGEX = Pattern.compile("\\{([\\?\\&#/]?)([\\w\\,]+)\\}");
+	private static final Pattern VARIABLE_REGEX = Pattern.compile("\\{([\\?\\&#/]?)([\\w\\,]+)(\\**)\\}");
 	private static final long serialVersionUID = -1007874653930162262L;
 
 	private final TemplateVariables variables;;
@@ -63,7 +63,8 @@ public class UriTemplate implements Iterable<TemplateVariable>, Serializable {
 
 			int start = matcher.start(0);
 
-			VariableType type = VariableType.from(matcher.group(1));
+			VariableType type = StringUtils.isEmpty(matcher.group(3)) ? VariableType.from(matcher.group(1))
+					: VariableType.COMPOSITE;
 			String[] names = matcher.group(2).split(",");
 
 			for (String name : names) {
@@ -200,8 +201,12 @@ public class UriTemplate implements Iterable<TemplateVariable>, Serializable {
 
 		for (TemplateVariable variable : getOptionalVariables()) {
 
-			Object value = iterator.hasNext() ? iterator.next() : null;
-			appendToBuilder(builder, variable, value);
+			if (variable.isComposite()) {
+				appendToBuilder(builder, variable, Arrays.asList(parameters));
+			} else {
+				Object value = iterator.hasNext() ? iterator.next() : null;
+				appendToBuilder(builder, variable, value);
+			}
 		}
 
 		return builder.build().toUri();
@@ -297,6 +302,70 @@ public class UriTemplate implements Iterable<TemplateVariable>, Serializable {
 			case FRAGMENT:
 				builder.fragment(value.toString());
 				break;
+			case COMPOSITE:
+				appendCompositeToBuilder(builder, variable, value);
+				break;
 		}
+	}
+
+	private static boolean isSimpleType(Object v) {
+		if (v instanceof String) {
+			return true;
+		}
+
+		if (v instanceof Integer) {
+			return true;
+		}
+
+		if (v instanceof Double) {
+			return true;
+		}
+
+		if (v instanceof Boolean) {
+			return true;
+		}
+
+		if (v instanceof Character) {
+			return true;
+		}
+
+		return false;
+	}
+
+	private static void appendCompositeToBuilder(UriComponentsBuilder builder, TemplateVariable variable, Object value) {
+		for (Object v : Iterable.class.cast(value)) {
+			if (isSimpleType(v)) {
+				builder.queryParam(variable.getName(), v);
+			} else {
+				for (Map.Entry<String, Object> property : getProperties(v).entrySet()) {
+					builder.queryParam(property.getKey(), property.getValue());
+				}
+			}
+		}
+	}
+
+	private static Map<String, Object> getProperties(Object object) {
+
+		Map<String, Object> empty = new HashMap<String, Object>();
+		Map<String, Object> properties = new HashMap<String, Object>();
+
+		// TODO beaninfo caching
+		try {
+			for (PropertyDescriptor descriptor : Introspector.getBeanInfo(object.getClass(), Object.class).getPropertyDescriptors()) {
+				Method getter = descriptor.getReadMethod();
+				if (getter == null) {
+					return empty;
+				}
+
+				String propertyName = descriptor.getDisplayName();
+				Object propertyValue = getter.invoke(object);
+				// TODO fallback logic, read from field
+				properties.put(propertyName, propertyValue);
+			}
+		} catch (Exception e) {
+			return empty;
+		}
+
+		return properties;
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2015 the original author or authors.
+ * Copyright 2014-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import org.springframework.hateoas.TemplateVariable.VariableType;
  * Unit tests for {@link UriTemplate}.
  * 
  * @author Oliver Gierke
+ * @author Roland Kulcsár
  */
 public class UriTemplateUnitTest {
 
@@ -44,6 +45,7 @@ public class UriTemplateUnitTest {
 	public void discoversTemplate() {
 
 		assertThat(UriTemplate.isTemplate("/foo{?bar}"), is(true));
+		assertThat(UriTemplate.isTemplate("/foo{?bar*}"), is(true));
 		assertThat(UriTemplate.isTemplate("/foo"), is(false));
 		assertThat(UriTemplate.isTemplate(null), is(false));
 		assertThat(UriTemplate.isTemplate(""), is(false));
@@ -64,7 +66,7 @@ public class UriTemplateUnitTest {
 	 * @see #137
 	 */
 	@Test
-	public void discoversRequestParamCntinued() {
+	public void discoversRequestParamContinued() {
 
 		UriTemplate template = new UriTemplate("/foo?bar{&foobar}");
 
@@ -114,6 +116,53 @@ public class UriTemplateUnitTest {
 
 		assertVariables(template, new TemplateVariable("bar", VariableType.REQUEST_PARAM), new TemplateVariable("foobar",
 				VariableType.REQUEST_PARAM));
+	}
+
+	@Test
+	public void discoversCompositeVariable() {
+
+		UriTemplate template = new UriTemplate("/find{?address*}");
+
+		assertVariables(template, new TemplateVariable("address", VariableType.COMPOSITE));
+	}
+
+	@Test
+	public void expandsMultipleVariables() {
+
+		UriTemplate template = new UriTemplate("/find{?year*}");
+
+		URI uri = template.expand("1965", "2000", "2012");
+		assertThat(uri.toString(), is("/find?year=1965&year=2000&year=2012"));
+	}
+
+	@Test
+	public void expandsMapVariable() {
+
+		Map<String, Iterable<String>> parameter = new HashMap<String, Iterable<String>>();
+		parameter.put("year", Arrays.asList("1965", "2000", "2012"));
+
+		UriTemplate template = new UriTemplate("/find{?year*}");
+
+		URI uri = template.expand(parameter);
+		assertThat(uri.toString(), is("/find?year=1965&year=2000&year=2012"));
+	}
+
+	@Test
+	public void expandsCustomVariable() {
+
+		UriTemplate template = new UriTemplate("/find{?address*}");
+
+		URI uri = template.expand(new Address("Newport Beach", "CA"));
+		assertThat(uri.toString(), is("/find?city=Newport%20Beach&state=CA"));
+	}
+
+	@Test
+	public void expandsMultipleCustomVariables() {
+
+		UriTemplate template = new UriTemplate("/find{?address*}");
+
+		URI uri = template.expand(new Address("Bp", "P"), new Address("Bp2", "Q"));
+		assertThat(uri.toString(), is("/find?city=Bp&state=P&city=Bp2&state=Q"));
 	}
 
 	/**
@@ -185,7 +234,7 @@ public class UriTemplateUnitTest {
 	 * @see #137
 	 */
 	@Test
-	public void rendersUriTempalteWithPathVariable() {
+	public void rendersUriTemplateWithPathVariable() {
 
 		UriTemplate template = new UriTemplate("/{foo}/bar{?page}");
 		assertThat(template.toString(), is("/{foo}/bar{?page}"));
@@ -274,6 +323,32 @@ public class UriTemplateUnitTest {
 
 			assertThat(template, hasItem(variable));
 			assertThat(template.getVariableNames(), hasItems(variable.getName()));
+		}
+	}
+
+	private static class Address {
+		private String city;
+		private String state;
+
+		public Address(String city, String state) {
+			this.city = city;
+			this.state = state;
+		}
+
+		public String getCity() {
+			return city;
+		}
+
+		public String getState() {
+			return state;
+		}
+
+		public String foo() {
+			return "";
+		}
+
+		public String getCity(String foo) {
+			return city;
 		}
 	}
 }

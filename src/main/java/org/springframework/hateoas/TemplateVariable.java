@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2016 the original author or authors.
+ * Copyright 2014-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import org.springframework.util.StringUtils;
  * A single template variable.
  * 
  * @author Oliver Gierke
+ * @author Roland Kulcsár
  */
 @Value
 @EqualsAndHashCode
@@ -128,6 +129,15 @@ public final class TemplateVariable implements Serializable {
 		return type.equals(FRAGMENT);
 	}
 
+	/**
+	 * Returns whether the variable is a composite one.
+	 *
+	 * @return
+	 */
+	boolean isComposite() {
+		return type.equals(COMPOSITE);
+	}
+
 	/* 
 	 * (non-Javadoc)
 	 * @see java.lang.Object#toString()
@@ -150,7 +160,8 @@ public final class TemplateVariable implements Serializable {
 		REQUEST_PARAM("?", true), //
 		REQUEST_PARAM_CONTINUED("&", true), //
 		SEGMENT("/", true), //
-		FRAGMENT("#", true);
+		FRAGMENT("#", true),
+		COMPOSITE("*", true);
 
 		private static final List<VariableType> COMBINABLE_TYPES = Arrays.asList(REQUEST_PARAM, REQUEST_PARAM_CONTINUED);
 
