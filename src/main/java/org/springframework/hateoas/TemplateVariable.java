@@ -135,7 +135,7 @@ public final class TemplateVariable implements Serializable {
 	 * @return
 	 */
 	boolean isComposite() {
-		return type.equals(COMPOSITE);
+		return type.isComposite;
 	}
 
 	/* 
@@ -167,6 +167,7 @@ public final class TemplateVariable implements Serializable {
 
 		private final String key;
 		private final boolean optional;
+		public boolean isComposite;
 
 		private VariableType(String key, boolean optional) {
 

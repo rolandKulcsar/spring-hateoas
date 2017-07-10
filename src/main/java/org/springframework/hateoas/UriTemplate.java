@@ -60,9 +60,9 @@ public class UriTemplate implements Iterable<TemplateVariable>, Serializable {
 
 			int start = matcher.start(0);
 
-			VariableType type = StringUtils.isEmpty(matcher.group(3)) ? VariableType.from(matcher.group(1))
-					: VariableType.COMPOSITE;
+			VariableType type = VariableType.from(matcher.group(1));
 			String[] names = matcher.group(2).split(",");
+			type.isComposite = !StringUtils.isEmpty(matcher.group(3));
 
 			for (String name : names) {
 				TemplateVariable variable = new TemplateVariable(name, type);
@@ -201,7 +201,10 @@ public class UriTemplate implements Iterable<TemplateVariable>, Serializable {
 		for (TemplateVariable variable : getOptionalVariables()) {
 
 			if (variable.isComposite()) {
-				appendCompositeToBuilder(builder, variable, remaining);
+				for (Object v : remaining) {
+					appendToBuilder(builder, variable, v);
+				}
+				//appendCompositeToBuilder(builder, variable, remaining);
 			} else {
 				Object value = iterator.hasNext() ? iterator.next() : null;
 				appendToBuilder(builder, variable, value);

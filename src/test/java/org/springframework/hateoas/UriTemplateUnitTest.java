@@ -127,12 +127,21 @@ public class UriTemplateUnitTest {
 	}
 
 	@Test
-	public void expandsCompositeVariable() {
+	public void expandsCompositeRequestParam() {
 
 		UriTemplate template = new UriTemplate("/find{?year*}");
 
 		URI uri = template.expand("1965", "2000", "2012");
 		assertThat(uri.toString(), is("/find?year=1965&year=2000&year=2012"));
+	}
+
+	@Test
+	public void expandsCompositePathVariable() {
+
+		UriTemplate template = new UriTemplate("/find/{year*}");
+
+		URI uri = template.expand("1965", "2000", "2012");
+		assertThat(uri.toString(), is("/find/1965/2000/2012"));
 	}
 
 	@Test
