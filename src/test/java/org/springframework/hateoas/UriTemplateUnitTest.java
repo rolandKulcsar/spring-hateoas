@@ -151,8 +151,8 @@ public class UriTemplateUnitTest {
 
 		UriTemplate template = new UriTemplate("/foo{/bar}{?year*}");
 
-		URI uri = template.expand("path", "1965", "2000", "2012");
-		assertThat(uri.toString(), is("/foo/path?year=1965&year=2000&year=2012"));
+		URI uri = template.expand("find", "1965", "2000", "2012");
+		assertThat(uri.toString(), is("/foo/find?year=1965&year=2000&year=2012"));
 	}
 
 	@Test
@@ -171,24 +171,18 @@ public class UriTemplateUnitTest {
 	@Test
 	public void expandsCompositeRequestParamWithSingleValueMap() {
 
-		Map<String, String> parameter = new HashMap<String, String>();
-		parameter.put("year", "1965");
-
 		UriTemplate template = new UriTemplate("/find{?year*}");
 
-		URI uri = template.expand(parameter);
+		URI uri = template.expand(Collections.singletonMap("year", "1965"));
 		assertThat(uri.toString(), is("/find?year=1965"));
 	}
 
 	@Test
 	public void expandsCompositeRequestParamWithMultiValueMap() {
 
-		Map<String, Iterable<String>> parameter = new HashMap<String, Iterable<String>>();
-		parameter.put("year", Arrays.asList("1965", "2000", "2012"));
-
 		UriTemplate template = new UriTemplate("/find{?year*}");
 
-		URI uri = template.expand(parameter);
+		URI uri = template.expand(Collections.singletonMap("year", Arrays.asList("1965", "2000", "2012")));
 		assertThat(uri.toString(), is("/find?year=1965&year=2000&year=2012"));
 	}
 
@@ -196,24 +190,18 @@ public class UriTemplateUnitTest {
 	@Test
 	public void expandsCompositeRequestParamWithPrimitiveArray() {
 
-		Map<String, int[]> parameter = new HashMap<String, int[]>();
-		parameter.put("year", new int[] {1965, 2000, 2012});
-
 		UriTemplate template = new UriTemplate("/find{?year*}");
 
-		URI uri = template.expand(parameter);
+		URI uri = template.expand(Collections.singletonMap("year", new int[] {1965, 2000, 2012} ));
 		assertThat(uri.toString(), is("/find?year=1965&year=2000&year=2012"));
 	}
 
 	@Test
 	public void expandsCompositeRequestParamWithNotPrimitiveArray() {
 
-		Map<String, String[]> parameter = new HashMap<String, String[]>();
-		parameter.put("year", new String[] {"1965", "2000", "2012"});
-
 		UriTemplate template = new UriTemplate("/find{?year*}");
 
-		URI uri = template.expand(parameter);
+		URI uri = template.expand(Collections.singletonMap("year", new String[] {"1965", "2000", "2012"}));
 		assertThat(uri.toString(), is("/find?year=1965&year=2000&year=2012"));
 	}
 
