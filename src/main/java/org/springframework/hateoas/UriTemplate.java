@@ -201,10 +201,7 @@ public class UriTemplate implements Iterable<TemplateVariable>, Serializable {
 		for (TemplateVariable variable : getOptionalVariables()) {
 
 			if (variable.isComposite()) {
-				for (Object v : remaining) {
-					appendToBuilder(builder, variable, v);
-				}
-
+				appendCompositeToBuilder(builder, variable, remaining);
 				return builder.build().toUri();
 			} else {
 				Object value = iterator.hasNext() ? iterator.next() : null;
@@ -236,20 +233,7 @@ public class UriTemplate implements Iterable<TemplateVariable>, Serializable {
 		for (TemplateVariable variable : getOptionalVariables()) {
 
 			if (variable.isComposite()) {
-				Object val = parameters.get(variable.getName());
-				if (val instanceof Iterable) {
-					for (Object value : Iterable.class.cast(parameters.get(variable.getName()))) {
-						appendToBuilder(builder, variable, value);
-					}
-				} else if (val.getClass().isArray()) {
-					for (Object value : Object[].class.cast(val)) {
-						appendToBuilder(builder, variable, value);
-					}
-				} else {
-					for (Object value : Arrays.asList(parameters.get(variable.getName()))) {
-						appendToBuilder(builder, variable, value);
-					}
-				}
+				handleCompositeVariable(builder, variable, parameters.get(variable.getName()));
 			} else {
 				appendToBuilder(builder, variable, parameters.get(variable.getName()));
 			}
@@ -324,6 +308,26 @@ public class UriTemplate implements Iterable<TemplateVariable>, Serializable {
 			case FRAGMENT:
 				builder.fragment(value.toString());
 				break;
+		}
+	}
+
+	private static void handleCompositeVariable(UriComponentsBuilder builder, TemplateVariable variable, Object value) {
+
+		if (value instanceof Iterable) {
+			appendCompositeToBuilder(builder, variable, Iterable.class.cast(value));
+		} else if (value.getClass().isArray()) {
+			for (Object v : Object[].class.cast(value)) {
+				appendToBuilder(builder, variable, v);
+			}
+		} else {
+			appendCompositeToBuilder(builder, variable, Arrays.asList(value));
+		}
+	}
+
+	private static void appendCompositeToBuilder(UriComponentsBuilder builder, TemplateVariable variable, Iterable<Object> values) {
+
+		for (Object value : values) {
+			appendToBuilder(builder, variable, value);
 		}
 	}
 }
