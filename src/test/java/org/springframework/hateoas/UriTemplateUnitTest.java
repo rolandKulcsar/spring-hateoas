@@ -121,7 +121,7 @@ public class UriTemplateUnitTest {
 	@Test
 	public void discoversCompositeVariable() {
 
-		UriTemplate template = new UriTemplate("/find{?address*}");
+		UriTemplate template = new UriTemplate("/find{/foo*}{?address*}{#bar*}");
 
 		for (TemplateVariable variable : template.getVariables()) {
 			assertThat(variable.isComposite(), is(true));
@@ -147,7 +147,7 @@ public class UriTemplateUnitTest {
 	}
 
 	@Test
-	public void expandsCompositeVariableCombineWithPathVariable() {
+	public void expandsCompositeRequestParamAndPathVariable() {
 
 		UriTemplate template = new UriTemplate("/foo{/bar}{?year*}");
 

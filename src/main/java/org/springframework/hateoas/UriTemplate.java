@@ -200,13 +200,13 @@ public class UriTemplate implements Iterable<TemplateVariable>, Serializable {
 
 		for (TemplateVariable variable : getOptionalVariables()) {
 
-			if (variable.isComposite()) {
-				handleCompositeVariable(builder, variable, remaining);
-				return builder.build().toUri();
-			} else {
+			if (!variable.isComposite()) {
 				Object value = iterator.hasNext() ? iterator.next() : null;
 				appendToBuilder(builder, variable, value);
 				remaining.remove(value);
+			} else {
+				appendCompositeToBuilder(builder, variable, remaining);
+				return builder.build().toUri();
 			}
 		}
 
@@ -231,12 +231,7 @@ public class UriTemplate implements Iterable<TemplateVariable>, Serializable {
 		UriComponentsBuilder builder = UriComponentsBuilder.fromUri(baseTemplate.expand(parameters));
 
 		for (TemplateVariable variable : getOptionalVariables()) {
-
-			if (variable.isComposite()) {
-				handleCompositeVariable(builder, variable, parameters.get(variable.getName()));
-			} else {
-				appendToBuilder(builder, variable, parameters.get(variable.getName()));
-			}
+			appendCompositeToBuilder(builder, variable, parameters.get(variable.getName()));
 		}
 
 		return builder.build().toUri();
@@ -311,7 +306,7 @@ public class UriTemplate implements Iterable<TemplateVariable>, Serializable {
 		}
 	}
 
-	private static void handleCompositeVariable(UriComponentsBuilder builder, TemplateVariable variable, Object parameters) {
+	private static void appendCompositeToBuilder(UriComponentsBuilder builder, TemplateVariable variable, Object parameters) {
 
 		Iterable<Object> values;
 		if (parameters instanceof Iterable) {
