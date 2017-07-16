@@ -119,9 +119,9 @@ public class UriTemplateUnitTest {
 	}
 
 	@Test
-	public void discoversCompositeVariable() {
+	public void discoversCompositeVariables() {
 
-		UriTemplate template = new UriTemplate("/find{/foo*}{?address*}{#bar*}");
+		UriTemplate template = new UriTemplate("/find{/foo*}{?address*}");
 
 		for (TemplateVariable variable : template.getVariables()) {
 			assertThat(variable.isComposite(), is(true));
@@ -147,7 +147,7 @@ public class UriTemplateUnitTest {
 	}
 
 	@Test
-	public void expandsCompositeRequestParamAndPathVariable() {
+	public void expandsPathVariableAndCompositeRequestParam() {
 
 		UriTemplate template = new UriTemplate("/foo{/bar}{?year*}");
 
@@ -156,20 +156,20 @@ public class UriTemplateUnitTest {
 	}
 
 	@Test
-	public void expandsCompositeVariableCombineWithPathVariableAndMap() {
+	public void expandsCompositePathVariableAndCompositeRequestParam() {
 
-		Map<String, Iterable<String>> parameter = new HashMap<String, Iterable<String>>();
-		parameter.put("bar", Arrays.asList("find", "x"));
-		parameter.put("year", Arrays.asList("1965", "2000", "2012"));
+		Map<String, Iterable<String>> parameters = new HashMap<String, Iterable<String>>();
+		parameters.put("bar", Arrays.asList("find", "spring"));
+		parameters.put("year", Arrays.asList("1965", "2000", "2012"));
 
 		UriTemplate template = new UriTemplate("/foo{/bar*}{?year*}");
 
-		URI uri = template.expand(parameter);
-		assertThat(uri.toString(), is("/foo/find/x?year=1965&year=2000&year=2012"));
+		URI uri = template.expand(parameters);
+		assertThat(uri.toString(), is("/foo/find/spring?year=1965&year=2000&year=2012"));
 	}
 
 	@Test
-	public void expandsCompositeVariableWithMap() {
+	public void expandsCompositeRequestParamWithSingleValueMap() {
 
 		Map<String, String> parameter = new HashMap<String, String>();
 		parameter.put("year", "1965");
@@ -181,7 +181,7 @@ public class UriTemplateUnitTest {
 	}
 
 	@Test
-	public void expandsCompositeVariableWithMultiValueMap() {
+	public void expandsCompositeRequestParamWithMultiValueMap() {
 
 		Map<String, Iterable<String>> parameter = new HashMap<String, Iterable<String>>();
 		parameter.put("year", Arrays.asList("1965", "2000", "2012"));
@@ -192,11 +192,12 @@ public class UriTemplateUnitTest {
 		assertThat(uri.toString(), is("/find?year=1965&year=2000&year=2012"));
 	}
 
-	@Test
-	public void expandsCompositeVariableWithArrayMultiValueMap() {
 
-		Map<String, String[]> parameter = new HashMap<String, String[]>();
-		parameter.put("year", new String[] {"1965", "2000", "2012"});
+	@Test
+	public void expandsCompositeRequestParamWithPrimitiveArray() {
+
+		Map<String, int[]> parameter = new HashMap<String, int[]>();
+		parameter.put("year", new int[] {1965, 2000, 2012});
 
 		UriTemplate template = new UriTemplate("/find{?year*}");
 
@@ -205,10 +206,10 @@ public class UriTemplateUnitTest {
 	}
 
 	@Test
-	public void expandsCompositeVariableWithPrimitiveArrayMultiValueMap() {
+	public void expandsCompositeRequestParamWithNotPrimitiveArray() {
 
-		Map<String, int[]> parameter = new HashMap<String, int[]>();
-		parameter.put("year", new int[] {1965, 2000, 2012});
+		Map<String, String[]> parameter = new HashMap<String, String[]>();
+		parameter.put("year", new String[] {"1965", "2000", "2012"});
 
 		UriTemplate template = new UriTemplate("/find{?year*}");
 

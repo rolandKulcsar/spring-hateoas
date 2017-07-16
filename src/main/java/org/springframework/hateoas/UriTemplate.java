@@ -209,6 +209,7 @@ public class UriTemplate implements Iterable<TemplateVariable>, Serializable {
 			if (!variable.isComposite()) {
 				Object value = iterator.hasNext() ? iterator.next() : null;
 				appendToBuilder(builder, variable, value);
+				// TODO hashset? remove?
 				remaining.remove(value);
 			} else {
 				appendToBuilder(builder, variable, remaining);
