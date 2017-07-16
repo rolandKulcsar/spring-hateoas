@@ -138,7 +138,7 @@ public class UriTemplateUnitTest {
 	@Test
 	public void expandsCompositePathVariable() {
 
-		UriTemplate template = new UriTemplate("/find/{year*}");
+		UriTemplate template = new UriTemplate("/find{/year*}");
 
 		URI uri = template.expand("1965", "2000", "2012");
 		assertThat(uri.toString(), is("/find/1965/2000/2012"));
@@ -166,7 +166,7 @@ public class UriTemplateUnitTest {
 	}
 
 	@Test
-	public void expandsCompositeVariableWithMap() {
+	public void expandsCompositeVariableWithMultiValueMap() {
 
 		Map<String, Iterable<String>> parameter = new HashMap<String, Iterable<String>>();
 		parameter.put("year", Arrays.asList("1965", "2000", "2012"));

@@ -235,7 +235,12 @@ public class UriTemplate implements Iterable<TemplateVariable>, Serializable {
 		for (TemplateVariable variable : getOptionalVariables()) {
 
 			if (variable.isComposite()) {
-				appendCompositeToBuilder(builder, variable, Iterable.class.cast(parameters.get(variable.getName())));
+				Object val = parameters.get(variable.getName());
+				if (val instanceof Iterable) {
+					appendCompositeToBuilder(builder, variable, Iterable.class.cast(parameters.get(variable.getName())));
+				} else {
+					appendCompositeToBuilder(builder, variable, Arrays.asList(parameters.get(variable.getName())));
+				}
 			} else {
 				appendToBuilder(builder, variable, parameters.get(variable.getName()));
 			}
