@@ -16,8 +16,14 @@
 package org.springframework.hateoas;
 
 import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -291,15 +297,7 @@ public class UriTemplate implements Iterable<TemplateVariable>, Serializable {
 			return;
 		}
 
-		Iterable parameters;
-		if (value instanceof Iterable) {
-			parameters = (Iterable) value;
-		} else if (value.getClass().isArray()) {
-			parameters = Arrays.asList((Object[]) value);
-		} else {
-			parameters = Collections.singletonList(value);
-		}
-
+		Iterable parameters = asIterable(value);
 		for (Object parameter : parameters) {
 			switch (variable.getType()) {
 				case REQUEST_PARAM:
@@ -315,5 +313,38 @@ public class UriTemplate implements Iterable<TemplateVariable>, Serializable {
 					break;
 			}
 		}
+	}
+
+	private static Iterable asIterable(Object value) {
+
+		Iterable parameters;
+		if (value instanceof Iterable) {
+			parameters = (Iterable) value;
+		} else if (value.getClass().isArray()) {
+			parameters = arrayObjectAsList(value);
+		} else {
+			parameters = Collections.singletonList(value);
+		}
+
+		return parameters;
+	}
+
+	private static List<Object> arrayObjectAsList(Object array) {
+
+		if (!array.getClass().isArray()) {
+			throw new IllegalArgumentException("The given value is not an array.");
+		}
+
+		if (array instanceof Object[]) {
+            return Arrays.asList((Object[]) array);
+        }
+
+        int length = Array.getLength(array);
+		List<Object> result = new ArrayList<Object>(length);
+		for (int i = 0; i < length; i++) {
+			result.add(i, Array.get(array, i));
+		}
+
+		return result;
 	}
 }
