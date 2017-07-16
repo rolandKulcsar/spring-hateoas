@@ -205,7 +205,7 @@ public class UriTemplate implements Iterable<TemplateVariable>, Serializable {
 				appendToBuilder(builder, variable, value);
 				remaining.remove(value);
 			} else {
-				appendCompositeToBuilder(builder, variable, remaining);
+				appendToBuilder(builder, variable, remaining);
 				return builder.build().toUri();
 			}
 		}
@@ -231,7 +231,7 @@ public class UriTemplate implements Iterable<TemplateVariable>, Serializable {
 		UriComponentsBuilder builder = UriComponentsBuilder.fromUri(baseTemplate.expand(parameters));
 
 		for (TemplateVariable variable : getOptionalVariables()) {
-			appendCompositeToBuilder(builder, variable, parameters.get(variable.getName()));
+			appendToBuilder(builder, variable, parameters.get(variable.getName()));
 		}
 
 		return builder.build().toUri();
@@ -291,34 +291,29 @@ public class UriTemplate implements Iterable<TemplateVariable>, Serializable {
 			return;
 		}
 
-		switch (variable.getType()) {
-			case REQUEST_PARAM:
-			case REQUEST_PARAM_CONTINUED:
-				builder.queryParam(variable.getName(), value);
-				break;
-			case PATH_VARIABLE:
-			case SEGMENT:
-				builder.pathSegment(value.toString());
-				break;
-			case FRAGMENT:
-				builder.fragment(value.toString());
-				break;
-		}
-	}
-
-	private static void appendCompositeToBuilder(UriComponentsBuilder builder, TemplateVariable variable, Object parameters) {
-
-		Iterable<Object> values;
-		if (parameters instanceof Iterable) {
-			values = Iterable.class.cast(parameters);
-		} else if (parameters.getClass().isArray()) {
-			values = Arrays.asList(Object[].class.cast(parameters));
+		Iterable parameters;
+		if (value instanceof Iterable) {
+			parameters = (Iterable) value;
+		} else if (value.getClass().isArray()) {
+			parameters = Arrays.asList((Object[]) value);
 		} else {
-			values = Collections.singletonList(parameters);
+			parameters = Collections.singletonList(value);
 		}
 
-		for (Object value : values) {
-			appendToBuilder(builder, variable, value);
+		for (Object parameter : parameters) {
+			switch (variable.getType()) {
+				case REQUEST_PARAM:
+				case REQUEST_PARAM_CONTINUED:
+					builder.queryParam(variable.getName(), parameter);
+					break;
+				case PATH_VARIABLE:
+				case SEGMENT:
+					builder.pathSegment(parameter.toString());
+					break;
+				case FRAGMENT:
+					builder.fragment(parameter.toString());
+					break;
+			}
 		}
 	}
 }
