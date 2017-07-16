@@ -135,7 +135,7 @@ public final class TemplateVariable implements Serializable {
 	 * @return
 	 */
 	boolean isComposite() {
-		return type.isComposite;
+		return type.isComposite();
 	}
 
 	/* 
@@ -160,14 +160,13 @@ public final class TemplateVariable implements Serializable {
 		REQUEST_PARAM("?", true), //
 		REQUEST_PARAM_CONTINUED("&", true), //
 		SEGMENT("/", true), //
-		FRAGMENT("#", true),
-		COMPOSITE("*", true);
+		FRAGMENT("#", true);
 
 		private static final List<VariableType> COMBINABLE_TYPES = Arrays.asList(REQUEST_PARAM, REQUEST_PARAM_CONTINUED);
 
 		private final String key;
 		private final boolean optional;
-		public boolean isComposite;
+		private boolean composite;
 
 		private VariableType(String key, boolean optional) {
 
@@ -182,6 +181,14 @@ public final class TemplateVariable implements Serializable {
 		 */
 		public boolean isOptional() {
 			return optional;
+		}
+
+		public boolean isComposite() {
+			return composite;
+		}
+
+		public void setComposite(boolean composite) {
+			this.composite = composite;
 		}
 
 		public boolean canBeCombinedWith(VariableType type) {

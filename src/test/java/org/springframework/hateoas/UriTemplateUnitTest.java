@@ -123,7 +123,9 @@ public class UriTemplateUnitTest {
 
 		UriTemplate template = new UriTemplate("/find{?address*}");
 
-		assertVariables(template, new TemplateVariable("address", VariableType.COMPOSITE));
+		for (TemplateVariable variable : template.getVariables()) {
+			assertThat(variable.isComposite(), is(true));
+		}
 	}
 
 	@Test

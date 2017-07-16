@@ -62,7 +62,7 @@ public class UriTemplate implements Iterable<TemplateVariable>, Serializable {
 
 			VariableType type = VariableType.from(matcher.group(1));
 			String[] names = matcher.group(2).split(",");
-			type.isComposite = !StringUtils.isEmpty(matcher.group(3));
+			type.setComposite(!StringUtils.isEmpty(matcher.group(3)));
 
 			for (String name : names) {
 				TemplateVariable variable = new TemplateVariable(name, type);
