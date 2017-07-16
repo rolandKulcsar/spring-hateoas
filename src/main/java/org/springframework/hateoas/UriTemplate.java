@@ -201,7 +201,7 @@ public class UriTemplate implements Iterable<TemplateVariable>, Serializable {
 		for (TemplateVariable variable : getOptionalVariables()) {
 
 			if (variable.isComposite()) {
-				appendCompositeToBuilder(builder, variable, remaining);
+				handleCompositeVariable(builder, variable, remaining);
 				return builder.build().toUri();
 			} else {
 				Object value = iterator.hasNext() ? iterator.next() : null;
@@ -311,20 +311,16 @@ public class UriTemplate implements Iterable<TemplateVariable>, Serializable {
 		}
 	}
 
-	private static void handleCompositeVariable(UriComponentsBuilder builder, TemplateVariable variable, Object value) {
+	private static void handleCompositeVariable(UriComponentsBuilder builder, TemplateVariable variable, Object parameters) {
 
-		if (value instanceof Iterable) {
-			appendCompositeToBuilder(builder, variable, Iterable.class.cast(value));
-		} else if (value.getClass().isArray()) {
-			for (Object v : Object[].class.cast(value)) {
-				appendToBuilder(builder, variable, v);
-			}
+		Iterable<Object> values;
+		if (parameters instanceof Iterable) {
+			values = Iterable.class.cast(parameters);
+		} else if (parameters.getClass().isArray()) {
+			values = Arrays.asList(Object[].class.cast(parameters));
 		} else {
-			appendCompositeToBuilder(builder, variable, Arrays.asList(value));
+			values = Collections.singletonList(parameters);
 		}
-	}
-
-	private static void appendCompositeToBuilder(UriComponentsBuilder builder, TemplateVariable variable, Iterable<Object> values) {
 
 		for (Object value : values) {
 			appendToBuilder(builder, variable, value);
