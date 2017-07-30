@@ -186,7 +186,6 @@ public class UriTemplateUnitTest {
 		assertThat(uri.toString(), is("/find?year=1965&year=2000&year=2012"));
 	}
 
-
 	@Test
 	public void expandsCompositeRequestParamWithPrimitiveArray() {
 
@@ -203,6 +202,74 @@ public class UriTemplateUnitTest {
 
 		URI uri = template.expand(Collections.singletonMap("year", new String[] {"1965", "2000", "2012"}));
 		assertThat(uri.toString(), is("/find?year=1965&year=2000&year=2012"));
+	}
+
+	/**
+	 * @see #483
+	 */
+	@Test
+	public void expandsCompositeValueAsAssociativeArray() {
+		UriTemplate template = new UriTemplate("/foo{?bar,foobar*}");
+
+		String expandedTemplate = template.expand(new HashMap<String, Object>(){{
+			put("bar", "barExpanded");
+			put("foobar", new HashMap<String, String>(){{
+				put("city", "Clarksville");
+				put("state", "TN");
+			}});
+		}}).toString();
+
+		assertThat(expandedTemplate, is("/foo?bar=barExpanded&city=Clarksville&state=TN"));
+	}
+
+	/**
+	 * @see #483
+	 */
+	@Test
+	public void expandsCompositeValueAsAssociativeArray2() {
+		UriTemplate template = new UriTemplate("/foo{&bar,foobar*}");
+
+		String expandedTemplate = template.expand(new HashMap<String, Object>(){{
+			put("bar", "barExpanded");
+			put("foobar", new HashMap<String, String>(){{
+				put("city", "Clarksville");
+				put("state", "TN");
+			}});
+		}}).toString();
+
+		assertThat(expandedTemplate, is("/foo?bar=barExpanded&city=Clarksville&state=TN"));
+	}
+
+	// TODO duplicate
+	/**
+	 * @see #483
+	 */
+	@Test
+	public void expandsCompositeValueAsList() {
+		UriTemplate template = new UriTemplate("/foo{&bar,foobar*}");
+
+		String expandedTemplate = template.expand(new HashMap<String, Object>(){{
+			put("bar", "barExpanded");
+			put("foobar", Arrays.asList("foo1", "foo2"));
+		}}).toString();
+
+		assertThat(expandedTemplate, is("/foo?bar=barExpanded&foobar=foo1&foobar=foo2"));
+	}
+
+	// TODO duplicate
+	/**
+	 * @see #483
+	 */
+	@Test
+	public void handlesCompositeValueAsSingleValue() {
+		UriTemplate template = new UriTemplate("/foo{&bar,foobar*}");
+
+		String expandedTemplate = template.expand(new HashMap<String, Object>(){{
+			put("bar", "barExpanded");
+			put("foobar", "singleValue");
+		}}).toString();
+
+		assertThat(expandedTemplate, is("/foo?bar=barExpanded&foobar=singleValue"));
 	}
 
 	/**

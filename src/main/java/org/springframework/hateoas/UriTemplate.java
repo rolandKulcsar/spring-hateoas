@@ -298,8 +298,15 @@ public class UriTemplate implements Iterable<TemplateVariable>, Serializable {
 			return;
 		}
 
-		Iterable parameters = asIterable(value);
-		for (Object parameter : parameters) {
+		if (value instanceof Map) {
+			Map<String, Object> map = (Map<String, Object>) value;
+			for (Map.Entry<String, Object> entry : map.entrySet()) {
+				builder.queryParam(entry.getKey(), entry.getValue());
+			}
+			return;
+		}
+
+		for (Object parameter : parametersAsIterable(value)) {
 			switch (variable.getType()) {
 				case REQUEST_PARAM:
 				case REQUEST_PARAM_CONTINUED:
@@ -316,7 +323,7 @@ public class UriTemplate implements Iterable<TemplateVariable>, Serializable {
 		}
 	}
 
-	private static Iterable asIterable(Object value) {
+	private static Iterable parametersAsIterable(Object value) {
 
 		Iterable parameters;
 		if (value instanceof Iterable) {
