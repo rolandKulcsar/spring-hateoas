@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 the original author or authors.
+ * Copyright 2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import javax.xml.bind.annotation.XmlAnyElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
@@ -43,7 +45,7 @@ public class Resources<T> extends ResourceSupport implements Iterable<T> {
 	 * Creates an empty {@link Resources} instance.
 	 */
 	protected Resources() {
-		this(new ArrayList<T>());
+		this(new ArrayList<>());
 	}
 
 	/**
@@ -66,7 +68,7 @@ public class Resources<T> extends ResourceSupport implements Iterable<T> {
 
 		Assert.notNull(content, "Content must not be null!");
 
-		this.content = new ArrayList<T>();
+		this.content = new ArrayList<>();
 
 		for (T element : content) {
 			this.content.add(element);
@@ -84,13 +86,10 @@ public class Resources<T> extends ResourceSupport implements Iterable<T> {
 	public static <T extends Resource<S>, S> Resources<T> wrap(Iterable<S> content) {
 
 		Assert.notNull(content, "Content must not be null!");
-		ArrayList<T> resources = new ArrayList<T>();
 
-		for (S element : content) {
-			resources.add((T) new Resource<S>(element));
-		}
-
-		return new Resources<T>(resources);
+		return StreamSupport.stream(content.spliterator(), false)
+				.map(element -> (T) new Resource<>(element))
+				.collect(Collectors.collectingAndThen(Collectors.toList(), resources -> new Resources<>(resources)));
 	}
 
 	/**

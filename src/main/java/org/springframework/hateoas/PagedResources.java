@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2015 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -36,7 +38,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @XmlRootElement(name = "pagedEntities")
 public class PagedResources<T> extends Resources<T> {
 
-	public static PagedResources<?> NO_PAGE = new PagedResources<Object>();
+	public static PagedResources<?> NO_PAGE = new PagedResources<>();
 
 	private PageMetadata metadata;
 
@@ -44,7 +46,7 @@ public class PagedResources<T> extends Resources<T> {
 	 * Default constructor to allow instantiation by reflection.
 	 */
 	protected PagedResources() {
-		this(new ArrayList<T>(), null);
+		this(new ArrayList<>(), null);
 	}
 
 	/**
@@ -91,13 +93,10 @@ public class PagedResources<T> extends Resources<T> {
 	public static <T extends Resource<S>, S> PagedResources<T> wrap(Iterable<S> content, PageMetadata metadata) {
 
 		Assert.notNull(content, "Content must not be null!");
-		ArrayList<T> resources = new ArrayList<T>();
 
-		for (S element : content) {
-			resources.add((T) new Resource<S>(element));
-		}
-
-		return new PagedResources<T>(resources, metadata);
+		return StreamSupport.stream(content.spliterator(), false)
+				.map(element -> (T) new Resource<>(element))
+				.collect(Collectors.collectingAndThen(Collectors.toList(), it -> new PagedResources<>(it, metadata)));
 	}
 
 	/**

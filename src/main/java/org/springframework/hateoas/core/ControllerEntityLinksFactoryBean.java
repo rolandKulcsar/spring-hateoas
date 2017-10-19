@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 the original author or authors.
+ * Copyright 2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,9 @@ package org.springframework.hateoas.core;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.config.AbstractFactoryBean;
@@ -87,15 +89,9 @@ public class ControllerEntityLinksFactoryBean extends AbstractFactoryBean<Contro
 	@Override
 	protected ControllerEntityLinks createInstance() throws Exception {
 
-		Collection<Class<?>> controllerTypes = new HashSet<Class<?>>();
-
-		for (Class<?> controllerType : getBeanTypesWithAnnotation(annotation)) {
-			if (AnnotationUtils.findAnnotation(controllerType, ExposesResourceFor.class) != null) {
-				controllerTypes.add(controllerType);
-			}
-		}
-
-		return new ControllerEntityLinks(controllerTypes, linkBuilderFactory);
+		return getBeanTypesWithAnnotation(annotation).stream()
+				.filter(it -> Objects.nonNull(AnnotationUtils.findAnnotation(it, ExposesResourceFor.class)))
+				.collect(Collectors.collectingAndThen(Collectors.toList(), it -> new ControllerEntityLinks(it, linkBuilderFactory)));
 	}
 
 	/* 
@@ -110,9 +106,9 @@ public class ControllerEntityLinksFactoryBean extends AbstractFactoryBean<Contro
 		super.afterPropertiesSet();
 	}
 
-	private Iterable<Class<?>> getBeanTypesWithAnnotation(Class<? extends Annotation> type) {
+	private Collection<Class<?>> getBeanTypesWithAnnotation(Class<? extends Annotation> type) {
 
-		Set<Class<?>> annotatedTypes = new HashSet<Class<?>>();
+		Set<Class<?>> annotatedTypes = new HashSet<>();
 
 		for (String beanName : context.getBeanDefinitionNames()) {
 

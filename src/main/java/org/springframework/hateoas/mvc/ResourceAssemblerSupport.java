@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2013 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,9 @@ package org.springframework.hateoas.mvc;
 
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.*;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.hateoas.ResourceAssembler;
@@ -61,13 +62,10 @@ public abstract class ResourceAssemblerSupport<T, D extends ResourceSupport> imp
 	public List<D> toResources(Iterable<? extends T> entities) {
 
 		Assert.notNull(entities, "Entities must not be null!");
-		List<D> result = new ArrayList<D>();
 
-		for (T entity : entities) {
-			result.add(toResource(entity));
-		}
-
-		return result;
+		return StreamSupport.stream(entities.spliterator(), false)
+				.map(this::toResource)
+				.collect(Collectors.toList());
 	}
 
 	/**
