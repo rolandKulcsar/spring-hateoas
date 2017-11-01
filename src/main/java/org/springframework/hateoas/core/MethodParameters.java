@@ -78,7 +78,7 @@ public class MethodParameters {
 	}
 
 	/**
-	 * Returns the {@link MethodParameter} with the given name or {@literal null} if none found.
+	 * Returns the {@link MethodParameter} with the given name or {@literal Optional#empty()} if none found.
 	 * 
 	 * @param name must not be {@literal null} or empty.
 	 * @return
