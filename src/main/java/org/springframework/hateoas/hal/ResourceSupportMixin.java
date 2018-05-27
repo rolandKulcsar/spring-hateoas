@@ -28,7 +28,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-abstract class ResourceSupportMixin extends ResourceSupport {
+/**
+ * Custom mixin to render {@link Link}s in HAL.
+ *
+ * @author Alexander Baetz
+ * @author Oliver Gierke
+ * @author Greg Turnquist
+ */
+public abstract class ResourceSupportMixin extends ResourceSupport {
 
 	@Override
 	@XmlElement(name = "link")

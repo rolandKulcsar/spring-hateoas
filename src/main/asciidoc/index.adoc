@@ -15,7 +15,7 @@ NOTE: Copies of this document may be made for your own use and for distribution 
 toc::[]
 
 [[fundamentals]]
-== Fundmentals
+== Fundamentals
 
 [[fundamentals.jaxb-json]]
 === Jackson / JAXB integration
@@ -67,7 +67,7 @@ This would render as follows in JSON:
 {
     "firstname" : "Dave",
     "lastname" : "Matthews",
-    _"links" : [
+    "_links" : [
         {
             "rel" : "self",
             "href" : "http://myhost/people"
@@ -316,7 +316,7 @@ A `RelProvider` is exposed as Spring bean when using `@EnableHypermediaSupport` 
 [[spis.curie-provider]]
 === CurieProvider API
 
-The http://tools.ietf.org/html/rfc5988=section-4[Web Linking RFC] describes registered and extension link relation types. Registered rels are well-known strings registered with the http://www.iana.org/assignments/link-relations/link-relations.xhtml[IANA registry of link relation types]. Extension rels can be used by applications that do not wish to register a relation type. They are a URI that uniquely identifies the relation type. The rel URI can be serialized as a compact URI or http://www.w3.org/TR/curie[Curie]. E.g. a curie `ex:persons` stands for the link relation type `http://example.com/rels/persons` if `ex` is defined as `http://example.com/rels/{rels}`. If curies are used, the base URI must be present in the response scope.
+The http://tools.ietf.org/html/rfc5988=section-4[Web Linking RFC] describes registered and extension link relation types. Registered rels are well-known strings registered with the http://www.iana.org/assignments/link-relations/link-relations.xhtml[IANA registry of link relation types]. Extension rels can be used by applications that do not wish to register a relation type. They are a URI that uniquely identifies the relation type. The rel URI can be serialized as a compact URI or http://www.w3.org/TR/curie[Curie]. E.g. a curie `ex:persons` stands for the link relation type `http://example.com/rels/persons` if `ex` is defined as `http://example.com/rels/{rel}`. If curies are used, the base URI must be present in the response scope.
 
 The rels created by the default `RelProvider` are extension relation types and as such must be URIs, which can cause a lot of overhead. The `CurieProvider` API takes care of that: it allows to define a base URI as URI template and a prefix which stands for that base URI. If a `CurieProvider` is present, the `RelProvider` prepends all rels with the curie prefix. Furthermore a `curies` link is automatically added to the HAL resource.
 
@@ -363,7 +363,7 @@ Since the purpose of the `CurieProvider` API is to allow for automatic curie cre
 [[client.traverson]]
 === Traverson
 
-As of version 0.11 Spring HATEOAS provides an API for client side service traversal inspired by the https://blog.codecentric.de/en/2013/11/traverson/[Traverson JavaScript library].
+Spring HATEOAS provides an API for client side service traversal inspired by the https://blog.codecentric.de/en/2013/11/traverson/[Traverson JavaScript library].
 
 [source, java]
 ----

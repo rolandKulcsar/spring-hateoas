@@ -18,9 +18,15 @@ package org.springframework.hateoas.core;
 import static org.springframework.hateoas.core.EncodingUtils.*;
 import static org.springframework.web.util.UriComponentsBuilder.*;
 
+import lombok.Getter;
+
 import java.net.URI;
 import java.util.Optional;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
+import org.springframework.hateoas.Affordance;
 import org.springframework.hateoas.Identifiable;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.LinkBuilder;
@@ -36,10 +42,13 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @author Oliver Gierke
  * @author Kamill Sokol
  * @author Kevin Conaway
+ * @author Greg Turnquist
  */
 public abstract class LinkBuilderSupport<T extends LinkBuilder> implements LinkBuilder {
 
 	private final UriComponents uriComponents;
+
+	private @Getter final List<Affordance> affordances;
 
 	/**
 	 * Creates a new {@link LinkBuilderSupport} using the given {@link UriComponentsBuilder}.
@@ -50,17 +59,19 @@ public abstract class LinkBuilderSupport<T extends LinkBuilder> implements LinkB
 
 		Assert.notNull(builder, "UriComponentsBuilder must not be null!");
 		this.uriComponents = builder.build();
+		this.affordances = new ArrayList<Affordance>();
 	}
 
 	/**
 	 * Creates a new {@link LinkBuilderSupport} using the given {@link UriComponents}.
-	 * 
+	 *
 	 * @param uriComponents must not be {@literal null}.
 	 */
 	public LinkBuilderSupport(UriComponents uriComponents) {
 
 		Assert.notNull(uriComponents, "UriComponents must not be null!");
 		this.uriComponents = uriComponents;
+		this.affordances = new ArrayList<Affordance>();
 	}
 
 	/*
@@ -133,12 +144,18 @@ public abstract class LinkBuilderSupport<T extends LinkBuilder> implements LinkB
 		return uriComponents.encode().toUri().normalize();
 	}
 
+	public T addAffordances(Collection<Affordance> affordances) {
+
+		this.affordances.addAll(affordances);
+		return getThis();
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.hateoas.LinkBuilder#withRel(java.lang.String)
 	 */
 	public Link withRel(String rel) {
-		return new Link(toString(), rel);
+		return new Link(toString(), rel).withAffordances(affordances);
 	}
 
 	/*

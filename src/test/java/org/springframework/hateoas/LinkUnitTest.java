@@ -19,9 +19,13 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.util.List;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.junit.Test;
+import org.springframework.core.MethodParameter;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 
 /**
  * Unit tests for {@link Link}.
@@ -145,10 +149,7 @@ public class LinkUnitTest {
 
 	@Test(expected = IllegalArgumentException.class)
 	public void rejectsLinkWithoutAttributesAtAll() {
-
-		Link link = Link.valueOf("</something>");
-
-		System.out.println(link);
+		Link.valueOf("</something>");
 	}
 
 	@Test(expected = IllegalArgumentException.class)
@@ -222,5 +223,90 @@ public class LinkUnitTest {
 
 		assertThat(Link.valueOf("<http://localhost>; rel=\"http://acme.com/rels/foo-bar\"").getRel()) //
 				.isEqualTo("http://acme.com/rels/foo-bar");
+	}
+
+	/**
+	 * @see #340
+	 */
+	@Test
+	public void linkWithAffordancesShouldWorkProperly() {
+
+		Link originalLink = new Link("/foo");
+		Link linkWithAffordance = originalLink.andAffordance(new TestAffordance());
+		Link linkWithTwoAffordances = linkWithAffordance.andAffordance(new TestAffordance());
+
+		assertThat(originalLink.getAffordances()).hasSize(0);
+		assertThat(linkWithAffordance.getAffordances()).hasSize(1);
+		assertThat(linkWithTwoAffordances.getAffordances()).hasSize(2);
+
+		assertThat(originalLink.hashCode()).isNotEqualTo(linkWithAffordance.hashCode());
+		assertThat(originalLink).isNotEqualTo(linkWithAffordance);
+
+		assertThat(linkWithAffordance.hashCode()).isNotEqualTo(linkWithTwoAffordances.hashCode());
+		assertThat(linkWithAffordance).isNotEqualTo(linkWithTwoAffordances);
+	}
+
+	/**
+	 * @see #671
+	 */
+	@Test
+	public void exposesLinkRelation() {
+
+		Link link = new Link("/", "foo");
+
+		assertThat(link.hasRel("foo")).isTrue();
+		assertThat(link.hasRel("bar")).isFalse();
+	}
+
+	/**
+	 * @see #671
+	 */
+	@Test
+	public void rejectsInvalidRelationsOnHasRel() {
+
+		Link link = new Link("/");
+
+		assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> link.hasRel(null));
+		assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> link.hasRel(""));
+	}
+
+	static class TestAffordance implements Affordance {
+
+		/* 
+		 * (non-Javadoc)
+		 * @see org.springframework.hateoas.Affordance#getAffordanceModel(org.springframework.http.MediaType)
+		 */
+		@Override
+		public <T extends AffordanceModel> T getAffordanceModel(MediaType mediaType) {
+			return null;
+		}
+
+		/* 
+		 * (non-Javadoc)
+		 * @see org.springframework.hateoas.Affordance#getHttpMethod()
+		 */
+		@Override
+		public HttpMethod getHttpMethod() {
+			return HttpMethod.PATCH;
+		}
+
+		/* 
+		 * (non-Javadoc)
+		 * @see org.springframework.hateoas.Affordance#getName()
+		 */
+		@Override
+		public String getName() {
+			return null;
+		}
+
+		@Override
+		public List<MethodParameter> getInputMethodParameters() {
+			return null;
+		}
+
+		@Override
+		public List<QueryParameter> getQueryMethodParameters() {
+			return null;
+		}
 	}
 }

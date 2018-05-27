@@ -32,6 +32,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * Base class for DTOs to collect links.
  * 
  * @author Oliver Gierke
+ * @author Johhny Lim
  */
 public class ResourceSupport implements Identifiable<Link> {
 
@@ -123,7 +124,10 @@ public class ResourceSupport implements Identifiable<Link> {
 	 * @return the link with the given rel or {@link Optional#empty()} if none found.
 	 */
 	public Optional<Link> getLink(String rel) {
-		return getLinks(rel).stream().findFirst();
+
+		return links.stream() //
+				.filter(link -> link.hasRel(rel)) //
+				.findFirst();
 	}
 
 	/**
@@ -147,7 +151,7 @@ public class ResourceSupport implements Identifiable<Link> {
 	public List<Link> getLinks(String rel) {
 
 		return links.stream() //
-				.filter(link -> link.getRel().equals(rel)) //
+				.filter(link -> link.hasRel(rel)) //
 				.collect(Collectors.toList());
 	}
 

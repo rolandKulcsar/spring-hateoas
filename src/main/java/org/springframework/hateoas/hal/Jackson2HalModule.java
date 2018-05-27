@@ -82,6 +82,7 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
  * 
  * @author Alexander Baetz
  * @author Oliver Gierke
+ * @author Jeffrey Walraven
  */
 public class Jackson2HalModule extends SimpleModule {
 
@@ -144,6 +145,13 @@ public class Jackson2HalModule extends SimpleModule {
 			this.halConfiguration = halConfiguration;
 		}
 
+		/**
+		 * Needed to support Jackson
+		 */
+		HalLinkListSerializer() {
+			this(null, null, null, null, new HalConfiguration().withRenderSingleLinks(RenderSingleLinks.AS_SINGLE));
+		}
+
 		/*
 		 * (non-Javadoc)
 		 * @see com.fasterxml.jackson.databind.ser.std.StdSerializer#serialize(java.lang.Object, com.fasterxml.jackson.core.JsonGenerator, com.fasterxml.jackson.databind.SerializerProvider)
@@ -200,9 +208,8 @@ public class Jackson2HalModule extends SimpleModule {
 			JavaType valueType = typeFactory.constructCollectionType(ArrayList.class, Object.class);
 			JavaType mapType = typeFactory.constructMapType(HashMap.class, keyType, valueType);
 
-			MapSerializer serializer = MapSerializer.construct(Collections.emptySet(), mapType, true, null,
-					provider.findKeySerializer(keyType, null), new OptionalListJackson2Serializer(property, halConfiguration),
-					null);
+			MapSerializer serializer = MapSerializer.construct(Collections.<String> emptySet(), mapType, true, null,
+					provider.findKeySerializer(keyType, null), new OptionalListJackson2Serializer(property, halConfiguration), null);
 
 			serializer.serialize(sortedLinks, jgen, provider);
 		}
@@ -395,14 +402,6 @@ public class Jackson2HalModule extends SimpleModule {
 		private final Map<Class<?>, JsonSerializer<Object>> serializers;
 		private final HalConfiguration halConfiguration;
 
-		public OptionalListJackson2Serializer() {
-			this(null, new HalConfiguration().withRenderSingleLinks(RenderSingleLinks.AS_SINGLE));
-		}
-
-		public OptionalListJackson2Serializer(BeanProperty property) {
-			this(property, new HalConfiguration().withRenderSingleLinks(RenderSingleLinks.AS_SINGLE));
-		}
-
 		/**
 		 * Creates a new {@link OptionalListJackson2Serializer} using the given {@link BeanProperty}.
 		 * 
@@ -520,7 +519,7 @@ public class Jackson2HalModule extends SimpleModule {
 		@Override
 		public JsonSerializer<?> createContextual(SerializerProvider provider, BeanProperty property)
 				throws JsonMappingException {
-			return new OptionalListJackson2Serializer(property);
+			return new OptionalListJackson2Serializer(property, halConfiguration);
 		}
 	}
 
@@ -566,7 +565,7 @@ public class Jackson2HalModule extends SimpleModule {
 			while (!JsonToken.END_OBJECT.equals(jp.nextToken())) {
 
 				if (!JsonToken.FIELD_NAME.equals(jp.getCurrentToken())) {
-					throw new JsonParseException(jp, "Expected relation name", jp.getCurrentLocation());
+					throw new JsonParseException(jp, "Expected relation name");
 				}
 
 				// save the relation in case the link does not contain it
@@ -575,11 +574,19 @@ public class Jackson2HalModule extends SimpleModule {
 				if (JsonToken.START_ARRAY.equals(jp.nextToken())) {
 					while (!JsonToken.END_ARRAY.equals(jp.nextToken())) {
 						link = jp.readValueAs(Link.class);
-						result.add(new Link(link.getHref(), relation));
+						result.add(new Link(link.getHref(), relation)
+							.withHreflang(link.getHreflang())
+							.withTitle(link.getTitle())
+							.withType(link.getType())
+							.withDeprecation(link.getDeprecation()));
 					}
 				} else {
 					link = jp.readValueAs(Link.class);
-					result.add(new Link(link.getHref(), relation));
+					result.add(new Link(link.getHref(), relation)
+						.withHreflang(link.getHreflang())
+						.withTitle(link.getTitle())
+						.withType(link.getType())
+						.withDeprecation(link.getDeprecation()));
 				}
 			}
 
@@ -642,7 +649,7 @@ public class Jackson2HalModule extends SimpleModule {
 			while (!JsonToken.END_OBJECT.equals(jp.nextToken())) {
 
 				if (!JsonToken.FIELD_NAME.equals(jp.getCurrentToken())) {
-					throw new JsonParseException(jp, "Expected relation name", jp.getCurrentLocation());
+					throw new JsonParseException(jp, "Expected relation name");
 				}
 
 				if (JsonToken.START_ARRAY.equals(jp.nextToken())) {
@@ -678,27 +685,6 @@ public class Jackson2HalModule extends SimpleModule {
 
 		private final Map<Class<?>, Object> serializers = new HashMap<>();
 		private final AutowireCapableBeanFactory delegate;
-
-		/**
-		 * Creates a new {@link HalHandlerInstantiator} using the given {@link RelProvider}, {@link CurieProvider} and
-		 * {@link MessageSourceAccessor} and {@link AutowireCapableBeanFactory}. Registers a prepared
-		 * {@link HalResourcesSerializer} and {@link HalLinkListSerializer} falling back to instantiation using the given
-		 * {@link AutowireCapableBeanFactory} if provided, or simple default constructor instantiation if not.
-		 * 
-		 * @param provider must not be {@literal null}.
-		 * @param curieProvider can be {@literal null}.
-		 * @param accessor can be {@literal null}.
-		 * @param beanFactory can be {@literal null}
-		 */
-		public HalHandlerInstantiator(RelProvider provider, CurieProvider curieProvider, MessageSourceAccessor accessor,
-				AutowireCapableBeanFactory beanFactory, HalConfiguration halConfiguration) {
-			this(provider, curieProvider, accessor, true, beanFactory, halConfiguration);
-		}
-
-		public HalHandlerInstantiator(RelProvider provider, CurieProvider curieProvider,
-				MessageSourceAccessor messageSourceAccessor, AutowireCapableBeanFactory beanFactory) {
-			this(provider, curieProvider, messageSourceAccessor, beanFactory, beanFactory.getBean(HalConfiguration.class));
-		}
 
 		public HalHandlerInstantiator(RelProvider provider, CurieProvider curieProvider,
 				MessageSourceAccessor messageSourceAccessor) {
@@ -864,7 +850,7 @@ public class Jackson2HalModule extends SimpleModule {
 	 *
 	 * @author Oliver Gierke
 	 */
-	private static class EmbeddedMapper {
+	public static class EmbeddedMapper {
 
 		private RelProvider relProvider;
 		private CurieProvider curieProvider;

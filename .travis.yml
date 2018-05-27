@@ -4,8 +4,6 @@ jdk:
 env:
   matrix:
     - PROFILE=non-existant
-    - PROFILE=spring43-next
-    - PROFILE=spring5
     - PROFILE=spring5-next
 addons:
   apt:
@@ -16,4 +14,4 @@ cache:
     - $HOME/.m2
 sudo: false
 install: true
-script: "mvn clean dependency:list test -P${PROFILE} -Dsort"
+script: "./mvnw clean dependency:list test -P${PROFILE} -Dsort"

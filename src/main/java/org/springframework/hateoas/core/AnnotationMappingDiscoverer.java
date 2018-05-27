@@ -20,15 +20,21 @@ import static org.springframework.core.annotation.AnnotationUtils.*;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.regex.Pattern;
 
+import org.springframework.http.HttpMethod;
 import org.springframework.util.Assert;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 /**
  * {@link MappingDiscoverer} implementation that inspects mappings from a particular annotation.
  * 
  * @author Oliver Gierke
  * @author Mark Paluch
+ * @author Greg Turnquist
  */
 public class AnnotationMappingDiscoverer implements MappingDiscoverer {
 
@@ -104,6 +110,34 @@ public class AnnotationMappingDiscoverer implements MappingDiscoverer {
 		}
 
 		return typeMapping == null || "/".equals(typeMapping) ? mapping[0] : join(typeMapping, mapping[0]);
+	}
+
+	/**
+	 * Extract {@link org.springframework.web.bind.annotation.RequestMapping}'s list of {@link RequestMethod}s into an
+	 * array of {@link String}s.
+	 * 
+	 * @param type
+	 * @param method
+	 * @return
+	 */
+	@Override
+	public Collection<HttpMethod> getRequestMethod(Class<?> type, Method method) {
+
+		Assert.notNull(type, "Type must not be null!");
+		Assert.notNull(method, "Method must not be null!");
+
+		Annotation mergedAnnotation = findMergedAnnotation(method, annotationType);
+		Object value = getValue(mergedAnnotation, "method");
+
+		RequestMethod[] requestMethods = (RequestMethod[]) value;
+
+		List<HttpMethod> requestMethodNames = new ArrayList<HttpMethod>();
+
+		for (RequestMethod requestMethod : requestMethods) {
+			requestMethodNames.add(HttpMethod.valueOf(requestMethod.toString()));
+		}
+
+		return requestMethodNames;
 	}
 
 	private String[] getMappingFrom(Annotation annotation) {

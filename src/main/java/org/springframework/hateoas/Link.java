@@ -19,10 +19,10 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.experimental.Wither;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -39,6 +39,7 @@ import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * Value object for links.
@@ -47,11 +48,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  * @author Greg Turnquist
  */
 @XmlType(name = "link", namespace = Link.ATOM_NAMESPACE)
-@JsonIgnoreProperties("templated")
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(value = "templated", ignoreUnknown = true)
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
 @Getter
-@EqualsAndHashCode(of = { "rel", "href", "hreflang", "media", "title", "deprecation" })
+@EqualsAndHashCode(of = { "rel", "href", "hreflang", "media", "title", "deprecation", "affordances" })
 public class Link implements Serializable {
 
 	private static final long serialVersionUID = -9037755944661782121L;
@@ -73,6 +74,7 @@ public class Link implements Serializable {
 	private @XmlAttribute @Wither String type;
 	private @XmlAttribute @Wither String deprecation;
 	private @XmlTransient @JsonIgnore UriTemplate template;
+	private @XmlTransient @JsonIgnore List<Affordance> affordances;
 
 	/**
 	 * Creates a new link to the given URI with the self rel.
@@ -108,6 +110,32 @@ public class Link implements Serializable {
 		this.template = template;
 		this.href = template.toString();
 		this.rel = rel;
+		this.affordances = new ArrayList<Affordance>();
+	}
+
+	public Link(String href, String rel, List<Affordance> affordances) {
+
+		this(href, rel);
+
+		Assert.notNull(affordances, "affordances must not be null!");
+
+		this.affordances = affordances;
+	}
+
+	/**
+	 * Empty constructor required by the marshalling framework.
+	 */
+	protected Link() {
+		this.affordances = new ArrayList<Affordance>();
+	}
+
+	/**
+	 * Returns safe copy of {@link Affordance}s.
+	 * 
+	 * @return
+	 */
+	public List<Affordance> getAffordances() {
+		return Collections.unmodifiableList(this.affordances);
 	}
 
 	/**
@@ -117,6 +145,50 @@ public class Link implements Serializable {
 	 */
 	public Link withSelfRel() {
 		return withRel(Link.REL_SELF);
+	}
+
+	/**
+	 * Create new {@link Link} with an additional {@link Affordance}.
+	 *
+	 * @param affordance must not be {@literal null}.
+	 * @return
+	 */
+	public Link andAffordance(Affordance affordance) {
+
+		Assert.notNull(affordance, "Affordance must not be null!");
+
+		List<Affordance> newAffordances = new ArrayList<Affordance>();
+		newAffordances.addAll(this.affordances);
+		newAffordances.add(affordance);
+
+		return withAffordances(newAffordances);
+	}
+
+	/**
+	 * Create new {@link Link} with additional {@link Affordance}s.
+	 * 
+	 * @param affordances must not be {@literal null}.
+	 * @return
+	 */
+	public Link andAffordances(List<Affordance> affordances) {
+
+		List<Affordance> newAffordances = new ArrayList<Affordance>();
+		newAffordances.addAll(this.affordances);
+		newAffordances.addAll(affordances);
+
+		return withAffordances(newAffordances);
+	}
+
+	/**
+	 * Creats a new {@link Link} with the given {@link Affordance}s.
+	 * 
+	 * @param affordances must not be {@literal null}.
+	 * @return
+	 */
+	public Link withAffordances(List<Affordance> affordances) {
+
+		return new Link(this.rel, this.href, this.hreflang, this.media, this.title, this.type, this.deprecation,
+				this.template, affordances);
 	}
 
 	/**
@@ -166,6 +238,19 @@ public class Link implements Serializable {
 	 */
 	public Link expand(Map<String, ? extends Object> arguments) {
 		return new Link(getUriTemplate().expand(arguments).toString(), getRel());
+	}
+
+	/**
+	 * Returns whether the current {@link Link} has the given link relation.
+	 * 
+	 * @param rel must not be {@literal null} or empty.
+	 * @return
+	 */
+	public boolean hasRel(String rel) {
+
+		Assert.hasText(rel, "Link relation must not be null or empty!");
+
+		return this.rel.equals(rel);
 	}
 
 	private UriTemplate getUriTemplate() {

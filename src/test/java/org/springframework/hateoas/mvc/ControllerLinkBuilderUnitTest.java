@@ -561,7 +561,7 @@ public class ControllerLinkBuilderUnitTest extends TestUtils {
 	@Test
 	public void considersEmptyOptionalMethodParameterOptional() {
 
-		Link link = linkTo(methodOn(ControllerWithMethods.class).methodWithJdk8Optional(Optional.<Integer> empty()))
+		Link link = linkTo(methodOn(ControllerWithMethods.class).methodWithJdk8Optional(Optional.empty()))
 				.withSelfRel();
 
 		assertThat(link.isTemplated()).isTrue();
@@ -672,6 +672,7 @@ public class ControllerLinkBuilderUnitTest extends TestUtils {
 			return null;
 		}
 
+		@RequestMapping
 		HttpEntity<Void> methodWithJdk8Optional(@RequestParam Optional<Integer> value) {
 			return null;
 		}
