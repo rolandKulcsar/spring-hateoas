@@ -17,6 +17,7 @@
 package org.springframework.hateoas
 
 import org.springframework.hateoas.mvc.ControllerLinkBuilder
+import org.springframework.hateoas.mvc.ControllerLinkBuilder.afford
 import org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo
 import org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn
 import kotlin.reflect.KClass
@@ -34,6 +35,8 @@ infix fun ControllerLinkBuilder.withRel(rel: String): Link = withRel(rel)
  * @author Roland Kulcsár
  */
 inline fun <reified C> linkTo(func: C.() -> Unit): ControllerLinkBuilder = linkTo(methodOn(C::class.java).apply(func))
+
+inline fun <reified C> afford(func: C.() -> Unit): Affordance = afford(methodOn(C::class.java).apply(func))
 
 /**
  * Adds the [links] to the [R] resource.
