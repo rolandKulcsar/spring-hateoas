@@ -67,7 +67,7 @@ open class LinkBuilderDsl<out C, R : ResourceSupport>(private val controller: Cl
     /**
      * Creates a [ControllerLinkBuilder] pointing to [func] method.
      */
-    fun <R> on(func: C.() -> R): ControllerLinkBuilder = linkTo(methodOn(controller).run(func))
+    fun <R> methodOn(func: C.() -> R): ControllerLinkBuilder = linkTo(methodOn(controller).run(func))
 
     /**
      * Adds link with the given [rel] to [resource].

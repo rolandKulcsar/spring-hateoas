@@ -4,8 +4,12 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import org.springframework.http.HttpMethod
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.*
-// TODO import fix
+import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
 
 /**
  * Unit tests for [LinkBuilderDsl].
@@ -16,10 +20,10 @@ class LinkBuilderDslTest : TestUtils() {
 
     @Test
     fun `creates link to controller method`() {
-        val self = linkTo<CustomerController> { findById("15") } withRel "self"
+        val self = linkTo<CustomerController> { findById("15") } withRel Link.REL_SELF
 
         assertPointsToMockServer(self)
-        assertThat(self.rel).isEqualTo("self")
+        assertThat(self.rel).isEqualTo(Link.REL_SELF)
         assertThat(self.href).endsWith("/customers/15")
     }
 
@@ -33,8 +37,8 @@ class LinkBuilderDslTest : TestUtils() {
 
     @Test
     fun `creates link to controller method with affordances`() {
-        val self = linkTo<CustomerController> { findById("15") } withRel "self"
-        val update = afford<CustomerController> { update("15", CustomerDto("John")) }
+        val self = linkTo<CustomerController> { findById("15") } withRel Link.REL_SELF
+        val update = afford<CustomerController> { update("15", CustomerDto("John Doe")) }
         val delete = afford<CustomerController> { delete("15") }
 
         val selfWithAffordances = self.andAffordances(listOf(update, delete))
@@ -49,12 +53,12 @@ class LinkBuilderDslTest : TestUtils() {
         val customer = Resource(Customer("15", "John Doe"))
 
         customer.add(CustomerController::class) {
-            on { findById(it.content.id) } withRel "self"
-            on { findProductsById(it.content.id) } withRel "products"
+            methodOn { findById(it.content.id) } withRel Link.REL_SELF
+            methodOn { findProductsById(it.content.id) } withRel "products"
         }
 
         customer.links.forEach { assertPointsToMockServer(it) }
-        assertThat(customer.hasLink("self")).isTrue()
+        assertThat(customer.hasLink(Link.REL_SELF)).isTrue()
         assertThat(customer.hasLink("products")).isTrue()
     }
 
@@ -63,12 +67,12 @@ class LinkBuilderDslTest : TestUtils() {
         val customer = CustomerResource("15", "John Doe")
 
         customer.add(CustomerController::class) {
-            on { findById(it.id) } withRel "self"
-            on { findProductsById(it.id) } withRel "products"
+            methodOn { findById(it.id) } withRel Link.REL_SELF
+            methodOn { findProductsById(it.id) } withRel "products"
         }
 
         customer.links.forEach { assertPointsToMockServer(it) }
-        assertThat(customer.hasLink("self")).isTrue()
+        assertThat(customer.hasLink(Link.REL_SELF)).isTrue()
         assertThat(customer.hasLink("products")).isTrue()
     }
 
