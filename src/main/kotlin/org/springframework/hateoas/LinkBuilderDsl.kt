@@ -29,12 +29,22 @@ import kotlin.reflect.KClass
  */
 infix fun ControllerLinkBuilder.withRel(rel: String): Link = withRel(rel)
 
+infix fun Stuff.withRel(rel: String): Link {
+    return this.builder!!.withRel(rel).andAffordances(this.affordances)
+}
+
 /**
  * Creates a [ControllerLinkBuilder] pointing to [func] method.
  *
  * @author Roland Kulcsár
  */
 inline fun <reified C> linkTo(func: C.() -> Unit): ControllerLinkBuilder = linkTo(methodOn(C::class.java).apply(func))
+
+inline fun <reified C> linkTo(setup: LinkDsl<C>.() -> Unit): Stuff {
+    val builder = LinkDsl(C::class.java)
+    builder.setup()
+    return builder.build()
+}
 
 inline fun <reified C> afford(func: C.() -> Unit): Affordance = afford(methodOn(C::class.java).apply(func))
 
@@ -55,6 +65,40 @@ fun <C, R : ResourceSupport> R.add(controller: Class<C>, links: LinkBuilderDsl<C
  */
 fun <C : Any, R : ResourceSupport> R.add(controller: KClass<C>, links: LinkBuilderDsl<C, R>.(R) -> Unit): R {
     return add(controller.java, links)
+}
+
+open class LinkDsl<C>(private val controller: Class<C>) {
+
+    val affordances = mutableListOf<Affordance>()
+    var builder: ControllerLinkBuilder? = null
+
+    fun build() : Stuff {
+        return Stuff(builder, affordances)
+    }
+
+    fun methodOn(func: C.() -> Any) {
+        builder = linkTo(methodOn(controller).run(func))
+    }
+
+//    fun affordances(func: () -> Affordance) {
+//        stuff.affordances.add(func.invoke())
+//    }
+
+    fun affordances(setup: AffordancesBuilder.() -> Unit) {
+        val builder = AffordancesBuilder()
+        builder.setup()
+        affordances.addAll(builder.affordances)
+    }
+
+}
+
+data class Stuff(var builder: ControllerLinkBuilder? = null, var affordances: MutableList<Affordance> = ArrayList())
+
+open class AffordancesBuilder {
+
+    val affordances = mutableListOf<Affordance>()
+
+    inline fun <reified C> afford(func: C.() -> Any) = affordances.add(afford(methodOn(C::class.java).func()))
 }
 
 /**

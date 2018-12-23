@@ -20,11 +20,25 @@ class LinkBuilderDslTest : TestUtils() {
 
     @Test
     fun `creates link to controller method`() {
-        val self = linkTo<CustomerController> { findById("15") } withRel Link.REL_SELF
+        //val self = linkTo<CustomerController> { findById("15") } withRel Link.REL_SELF
+        val self = linkTo<CustomerController> {
+            methodOn { findById("15") }
+//            affordances {
+//                afford<CustomerController> { delete("15") }
+//                afford<CustomerController> { update("15", CustomerDto("")) }
+//            }
+            affordances {
+                afford<CustomerController> {
+                    delete("15")
+                    update("15", CustomerDto(""))
+                }
+            }
+        } withRel "self"
 
         assertPointsToMockServer(self)
         assertThat(self.rel).isEqualTo(Link.REL_SELF)
         assertThat(self.href).endsWith("/customers/15")
+        assertThat(self.affordances).hasSize(2)
     }
 
     @Test
@@ -37,7 +51,7 @@ class LinkBuilderDslTest : TestUtils() {
 
     @Test
     fun `creates link to controller method with affordances`() {
-        val self = linkTo<CustomerController> { findById("15") } withRel Link.REL_SELF
+        val self = linkTo<CustomerController> { methodOn { findById("15") }} withRel Link.REL_SELF
         val update = afford<CustomerController> { update("15", CustomerDto("John Doe")) }
         val delete = afford<CustomerController> { delete("15") }
 
