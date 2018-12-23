@@ -16,29 +16,15 @@ import org.springframework.web.bind.annotation.RequestMapping
  *
  * @author Roland Kulcsár
  */
-class LinkBuilderDslTest : TestUtils() {
+class LinkBuilderDslUnitTest : TestUtils() {
 
     @Test
     fun `creates link to controller method`() {
-        //val self = linkTo<CustomerController> { findById("15") } withRel Link.REL_SELF
-        val self = linkTo<CustomerController> {
-            methodOn { findById("15") }
-//            affordances {
-//                afford<CustomerController> { delete("15") }
-//                afford<CustomerController> { update("15", CustomerDto("")) }
-//            }
-            affordances {
-                afford<CustomerController> {
-                    delete("15")
-                    update("15", CustomerDto(""))
-                }
-            }
-        } withRel "self"
+        val self = linkTo<CustomerController> { findById("15") } withRel Link.REL_SELF
 
         assertPointsToMockServer(self)
         assertThat(self.rel).isEqualTo(Link.REL_SELF)
         assertThat(self.href).endsWith("/customers/15")
-        assertThat(self.affordances).hasSize(2)
     }
 
     @Test
@@ -51,15 +37,15 @@ class LinkBuilderDslTest : TestUtils() {
 
     @Test
     fun `creates link to controller method with affordances`() {
-        val self = linkTo<CustomerController> { methodOn { findById("15") }} withRel Link.REL_SELF
-        val update = afford<CustomerController> { update("15", CustomerDto("John Doe")) }
-        val delete = afford<CustomerController> { delete("15") }
+        val self = linkTo<CustomerController> {  findById("15") } withRel Link.REL_SELF
+        val selfWithAffordances = self andAffordances {
+            afford<CustomerController> { update("15", CustomerDto("John Doe")) }
+            afford<CustomerController> { delete("15") }
+        }
 
-        val selfWithAffordances = self.andAffordances(listOf(update, delete))
-
-        assertThat(selfWithAffordances.affordances).hasSize(3)
-        assertThat(selfWithAffordances.hashCode()).isNotEqualTo(self.hashCode())
-        assertThat(selfWithAffordances).isNotEqualTo(self)
+        assertPointsToMockServer(self)
+        assertThat(selfWithAffordances.affordances).hasSize(2)
+        assertNotEqualAndDifferentHashCode(selfWithAffordances, self)
     }
 
     @Test
@@ -67,8 +53,8 @@ class LinkBuilderDslTest : TestUtils() {
         val customer = Resource(Customer("15", "John Doe"))
 
         customer.add(CustomerController::class) {
-            methodOn { findById(it.content.id) } withRel Link.REL_SELF
-            methodOn { findProductsById(it.content.id) } withRel "products"
+            linkTo { findById(it.content.id) } withRel Link.REL_SELF
+            linkTo { findProductsById(it.content.id) } withRel "products"
         }
 
         customer.links.forEach { assertPointsToMockServer(it) }
@@ -81,13 +67,31 @@ class LinkBuilderDslTest : TestUtils() {
         val customer = CustomerResource("15", "John Doe")
 
         customer.add(CustomerController::class) {
-            methodOn { findById(it.id) } withRel Link.REL_SELF
-            methodOn { findProductsById(it.id) } withRel "products"
+            linkTo { findById(it.id) } withRel Link.REL_SELF
+            linkTo { findProductsById(it.id) } withRel "products"
         }
 
         customer.links.forEach { assertPointsToMockServer(it) }
         assertThat(customer.hasLink(Link.REL_SELF)).isTrue()
         assertThat(customer.hasLink("products")).isTrue()
+    }
+
+    @Test
+    fun `adds links to resource with affordances`() {
+        val customer = CustomerResource("15", "John Doe")
+
+        customer.add(CustomerController::class) {
+            linkTo { findById(it.id) } withRel Link.REL_SELF andAffordances {
+                afford { update(it.id, CustomerDto("John Doe")) }
+                afford { delete(it.id) }
+            }
+        }
+
+        customer.links.forEach { assertPointsToMockServer(it) }
+        assertThat(customer.hasLink(Link.REL_SELF)).isTrue()
+
+        val self = customer.getLink(Link.REL_SELF).get()
+        assertThat(self.affordances).hasSize(2)
     }
 
     data class Customer(val id: String, val name: String)

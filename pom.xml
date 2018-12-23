@@ -400,19 +400,19 @@
 		<dependency>
 			<groupId>org.jetbrains.kotlin</groupId>
 			<artifactId>kotlin-stdlib</artifactId>
-			<version>1.2.41</version>
+			<version>1.2.71</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.jetbrains.kotlin</groupId>
 			<artifactId>kotlin-reflect</artifactId>
-			<version>1.2.41</version>
+			<version>1.2.71</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.jetbrains.kotlin</groupId>
 			<artifactId>kotlin-test</artifactId>
-			<version>1.2.41</version>
+			<version>1.2.71</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -656,7 +656,7 @@
 			<plugin>
 				<groupId>org.jetbrains.kotlin</groupId>
 				<artifactId>kotlin-maven-plugin</artifactId>
-				<version>1.2.41</version>
+				<version>1.2.71</version>
 				<executions>
 					<execution>
 						<id>compile</id>
