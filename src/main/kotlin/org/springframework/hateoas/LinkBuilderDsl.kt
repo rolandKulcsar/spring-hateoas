@@ -93,6 +93,19 @@ open class LinkBuilderDsl<C, R : ResourceSupport>(val controller: Class<C>, val 
         return link
     }
 
+    inline infix fun Link.andAffordance(func: C.() -> Unit): Link {
+        val affordance = afford(methodOn(controller).apply(func))
+        val link = andAffordance(affordance)
+
+        if (resource.hasLink(rel)) {
+            resource.links.remove(this)
+        }
+
+        resource.add(link)
+
+        return link
+    }
+
     inline infix fun Link.andAffordances(setup: AffordancesBuilderDslWithController<C>.() -> Unit): Link {
         val builder= AffordancesBuilderDslWithController(controller)
         builder.setup()

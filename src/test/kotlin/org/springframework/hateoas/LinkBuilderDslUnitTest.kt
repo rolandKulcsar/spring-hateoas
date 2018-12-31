@@ -87,6 +87,23 @@ class LinkBuilderDslUnitTest : TestUtils() {
     }
 
     @Test
+    fun `adds links to resource with an affordance`() {
+        val customer = CustomerResource("15", "John Doe")
+
+        customer.add(CustomerController::class) {
+            linkTo { findById(it.id) } withRel Link.REL_SELF andAffordance {
+                update(it.id, CustomerDto("John Doe"))
+            }
+        }
+
+        customer.links.forEach { assertPointsToMockServer(it) }
+        assertThat(customer.hasLink(Link.REL_SELF)).isTrue()
+
+        val self = customer.getLink(Link.REL_SELF).get()
+        assertThat(self.affordances).hasSize(2)
+    }
+
+    @Test
     fun `adds links to resource with affordances`() {
         val customer = CustomerResource("15", "John Doe")
 
