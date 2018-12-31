@@ -29,6 +29,12 @@ import kotlin.reflect.KClass
  */
 infix fun ControllerLinkBuilder.withRel(rel: String): Link = withRel(rel)
 
+inline fun <reified C> Link.andAffordance(func: C.() -> Unit): Link {
+    val affordance = afford(methodOn(C::class.java).apply(func))
+
+    return andAffordance(affordance)
+}
+
 inline infix fun Link.andAffordances(setup: AffordancesBuilderDsl.() -> Unit): Link {
     val builder = AffordancesBuilderDsl()
     builder.setup()
@@ -52,6 +58,7 @@ inline fun <reified C> afford(func: C.() -> Unit): Affordance = afford(methodOn(
  */
 fun <C, R : ResourceSupport> R.add(controller: Class<C>, links: LinkBuilderDsl<C, R>.(R) -> Unit): R {
     LinkBuilderDsl(controller, this).links(this)
+
     return this
 }
 
@@ -69,7 +76,7 @@ fun <C : Any, R : ResourceSupport> R.add(controller: KClass<C>, links: LinkBuild
  *
  * @author Roland Kulcsár
  */
-open class LinkBuilderDsl<C, R : ResourceSupport>(val controller: Class<C>, private val resource: R) {
+open class LinkBuilderDsl<C, R : ResourceSupport>(val controller: Class<C>, val resource: R) {
 
     /**
      * Creates a [ControllerLinkBuilder] pointing to [func] method.
@@ -90,7 +97,15 @@ open class LinkBuilderDsl<C, R : ResourceSupport>(val controller: Class<C>, priv
         val builder= AffordancesBuilderDslWithController(controller)
         builder.setup()
 
-        return andAffordances(builder.affordances)
+        val link = andAffordances(builder.affordances)
+
+        if (resource.hasLink(rel)) {
+            resource.links.remove(this)
+        }
+
+        resource.add(link)
+
+        return link
     }
 }
 

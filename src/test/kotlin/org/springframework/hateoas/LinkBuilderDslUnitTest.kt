@@ -36,16 +36,26 @@ class LinkBuilderDslUnitTest : TestUtils() {
     }
 
     @Test
+    fun `creates link to controller method with an affordance`() {
+        val self = linkTo<CustomerController> { findById("15") } withRel Link.REL_SELF
+        val selfWithAffordance = self.andAffordance<CustomerController> { update("15", CustomerDto("John Doe")) }
+
+        assertThat(selfWithAffordance.affordances).hasSize(2)
+        assertThat(selfWithAffordance.hashCode()).isNotEqualTo(self.hashCode())
+        assertThat(selfWithAffordance).isNotEqualTo(self)
+    }
+
+    @Test
     fun `creates link to controller method with affordances`() {
-        val self = linkTo<CustomerController> {  findById("15") } withRel Link.REL_SELF
+        val self = linkTo<CustomerController> { findById("15") } withRel Link.REL_SELF
         val selfWithAffordances = self andAffordances {
             afford<CustomerController> { update("15", CustomerDto("John Doe")) }
             afford<CustomerController> { delete("15") }
         }
 
-        assertPointsToMockServer(self)
-        assertThat(selfWithAffordances.affordances).hasSize(2)
-        assertNotEqualAndDifferentHashCode(selfWithAffordances, self)
+        assertThat(selfWithAffordances.affordances).hasSize(3)
+        assertThat(selfWithAffordances.hashCode()).isNotEqualTo(self.hashCode())
+        assertThat(selfWithAffordances).isNotEqualTo(self)
     }
 
     @Test
@@ -91,7 +101,7 @@ class LinkBuilderDslUnitTest : TestUtils() {
         assertThat(customer.hasLink(Link.REL_SELF)).isTrue()
 
         val self = customer.getLink(Link.REL_SELF).get()
-        assertThat(self.affordances).hasSize(2)
+        assertThat(self.affordances).hasSize(3)
     }
 
     data class Customer(val id: String, val name: String)
