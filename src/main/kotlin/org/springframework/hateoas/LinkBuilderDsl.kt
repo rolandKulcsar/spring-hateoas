@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,11 @@ import kotlin.reflect.KClass
  */
 infix fun ControllerLinkBuilder.withRel(rel: String): Link = withRel(rel)
 
+/**
+ * Create new [Link] with additional [Affordance]s.
+ *
+ * @author Roland Kulcsár
+ */
 inline infix fun Link.andAffordances(setup: AffordancesBuilderDsl.() -> Unit): Link {
     val builder = AffordancesBuilderDsl()
     builder.setup()
@@ -43,6 +48,12 @@ inline infix fun Link.andAffordances(setup: AffordancesBuilderDsl.() -> Unit): L
  */
 inline fun <reified C> linkTo(func: C.() -> Unit): ControllerLinkBuilder = linkTo(methodOn(C::class.java).apply(func))
 
+/**
+ * Extract a [Link] from the [ControllerLinkBuilder] and look up the related [Affordance]. Should
+ * only be one.
+ *
+ * @author Roland Kulcsár
+ */
 inline fun <reified C> afford(func: C.() -> Unit): Affordance = afford(methodOn(C::class.java).apply(func))
 
 /**
@@ -51,7 +62,8 @@ inline fun <reified C> afford(func: C.() -> Unit): Affordance = afford(methodOn(
  * @author Roland Kulcsár
  */
 fun <C, R : ResourceSupport> R.add(controller: Class<C>, links: LinkBuilderDsl<C, R>.(R) -> Unit): R {
-    LinkBuilderDsl(controller, this).links(this)
+    val builder = LinkBuilderDsl(controller, this)
+    builder.links(this)
 
     return this
 }
@@ -89,8 +101,16 @@ open class LinkBuilderDsl<C, R : ResourceSupport>(val controller: Class<C>, val 
 
 }
 
+/**
+ * Provides an affordances builder Kotlin DSL in order to be able to write idiomatic Kotlin code.
+ *
+ * @author Roland Kulcsár
+ */
 open class AffordancesBuilderDsl(val affordances: MutableList<Affordance> = mutableListOf()) {
 
-    inline fun <reified C> afford(func: C.() -> Any) = affordances.add(afford(methodOn(C::class.java).func()))
+    inline fun <reified C> afford(func: C.() -> Any) {
+        val affordance = afford(methodOn(C::class.java).func())
+        affordances.add(affordance)
+    }
 
 }
