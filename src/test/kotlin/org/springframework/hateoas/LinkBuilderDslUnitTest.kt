@@ -34,6 +34,8 @@ import org.springframework.web.bind.annotation.RequestMapping
  */
 class LinkBuilderDslUnitTest : TestUtils() {
 
+    private val REL_PRODUCTS = "products"
+
     @Test
     fun `creates link to controller method`() {
         val self = linkTo<CustomerController> { findById("15") } withRel Link.REL_SELF
@@ -53,10 +55,11 @@ class LinkBuilderDslUnitTest : TestUtils() {
 
     @Test
     fun `creates link to controller method with affordances`() {
-        val self = linkTo<CustomerController> { findById("15") } withRel Link.REL_SELF
+        val id = "15"
+        val self = linkTo<CustomerController> { findById(id) } withRel Link.REL_SELF
         val selfWithAffordances = self andAffordances {
-            afford<CustomerController> { update("15", CustomerDto("John Doe")) }
-            afford<CustomerController> { delete("15") }
+            afford<CustomerController> { update(id, CustomerDto("John Doe")) }
+            afford<CustomerController> { delete(id) }
         }
 
         assertThat(selfWithAffordances.affordances).hasSize(3)
@@ -70,12 +73,12 @@ class LinkBuilderDslUnitTest : TestUtils() {
 
         customer.add(CustomerController::class) {
             linkTo { findById(it.content.id) } withRel Link.REL_SELF
-            linkTo { findProductsById(it.content.id) } withRel "products"
+            linkTo { findProductsById(it.content.id) } withRel REL_PRODUCTS
         }
 
         customer.links.forEach { assertPointsToMockServer(it) }
         assertThat(customer.hasLink(Link.REL_SELF)).isTrue()
-        assertThat(customer.hasLink("products")).isTrue()
+        assertThat(customer.hasLink(REL_PRODUCTS)).isTrue()
     }
 
     @Test
@@ -84,12 +87,12 @@ class LinkBuilderDslUnitTest : TestUtils() {
 
         customer.add(CustomerController::class) {
             linkTo { findById(it.id) } withRel Link.REL_SELF
-            linkTo { findProductsById(it.id) } withRel "products"
+            linkTo { findProductsById(it.id) } withRel REL_PRODUCTS
         }
 
         customer.links.forEach { assertPointsToMockServer(it) }
         assertThat(customer.hasLink(Link.REL_SELF)).isTrue()
-        assertThat(customer.hasLink("products")).isTrue()
+        assertThat(customer.hasLink(REL_PRODUCTS)).isTrue()
     }
 
     data class Customer(val id: String, val name: String)
