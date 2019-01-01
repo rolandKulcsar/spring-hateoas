@@ -87,30 +87,10 @@ open class LinkBuilderDsl<C, R : ResourceSupport>(val controller: Class<C>, val 
         return link
     }
 
-    inline infix fun Link.andAffordances(setup: AffordancesBuilderDslWithController<C>.() -> Unit): Link {
-        val builder= AffordancesBuilderDslWithController(controller)
-        builder.setup()
-
-        val link = andAffordances(builder.affordances)
-
-        if (resource.hasLink(rel)) {
-            resource.links.remove(this)
-        }
-
-        resource.add(link)
-
-        return link
-    }
 }
 
 open class AffordancesBuilderDsl(val affordances: MutableList<Affordance> = mutableListOf()) {
 
     inline fun <reified C> afford(func: C.() -> Any) = affordances.add(afford(methodOn(C::class.java).func()))
-
-}
-
-open class AffordancesBuilderDslWithController<C>(val controller: Class<C>, val affordances: MutableList<Affordance> = mutableListOf()) {
-
-    inline fun afford(func: C.() -> Any) = affordances.add(afford(methodOn(controller).func()))
 
 }
